@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="theme-color" content="#d8a8ae"/>
+  <link rel="manifest" href="manifest.json"/>
+  <title>Atelie do Laco</title>
+  <style>
+:root{
+  --bg:#fdf9f8;--panel:#fff;--soft:#fff4f3;--line:#efdedd;
+  --text:#6f575b;--muted:#9c8589;--rose:#d8a8ae;--rose-s:#c98f98;
+  --gold:#c9a46c;--green:#6e9d7a;--red:#c77982;
+  --shadow:0 8px 24px rgba(201,143,152,.12);--r:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:-apple-system,system-ui,"Segoe UI",sans-serif;color:var(--text);background:var(--bg)}
+input,select,textarea,button{font-size:16px;font-family:inherit}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:100;}
+.bottom-nav button{border:0;background:none;color:var(--muted);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;cursor:pointer;min-width:52px;}
+.bottom-nav button.active{color:var(--rose-s)}
+.bottom-nav button svg{width:22px;height:22px;flex-shrink:0}
+main{padding:16px 14px calc(85px + env(safe-area-inset-bottom));max-width:600px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+h2{margin:0 0 4px;font-size:24px}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.card h3{margin:0 0 12px;font-size:16px}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--shadow)}
+.kpi .label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700}
+.kpi .value{font-size:22px;font-weight:700;margin-top:4px}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.kpi-hl{background:linear-gradient(135deg,var(--rose),var(--rose-s));color:#fff;border-color:transparent}
+.kpi-hl .label,.kpi-hl .sub{color:rgba(255,255,255,.8)}
+.form-group{margin-bottom:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
+input,select,textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--text);outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--rose-s);box-shadow:0 0 0 3px rgba(201,143,152,.12)}
+textarea{resize:vertical}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;border-radius:12px;border:0;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.btn-primary{background:linear-gradient(135deg,var(--rose),var(--rose-s));color:#fff;width:100%}
+.btn-success{background:var(--green);color:#fff}
+.btn-danger{background:var(--red);color:#fff;font-size:12px;padding:7px 11px}
+.btn-soft{background:var(--soft);color:var(--text);font-size:12px;padding:7px 11px}
+.btn-outline{background:#fff;color:var(--text);border:1px solid var(--line);font-size:13px;padding:9px 14px}
+.btn-full{width:100%}
+.status{display:inline-flex;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.st-novo{background:#fce9eb;color:#b05f6b}
+.st-producao{background:#fff1de;color:#a06a19}
+.st-pronto{background:#e9f0f5;color:#5f7f90}
+.st-entregue{background:#e7f4eb;color:#4b8260}
+.st-cancelado{background:#f5e8ea;color:#9a5e67}
+.st-ok{background:#e7f4eb;color:#4b8260}
+.st-low{background:#fff1de;color:#a06a19}
+.st-zero{background:#fce9eb;color:#b05f6b}
+.list-item{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff;margin-bottom:10px}
+.list-item .head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
+.list-item strong{font-size:14px}
+.small{font-size:12px;color:var(--muted)}
+.empty{padding:24px;text-align:center;border:1px dashed var(--line);border-radius:14px;color:var(--muted);background:#fff;font-size:14px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.bar-label{font-size:12px;min-width:80px;color:var(--muted)}
+.bar-track{flex:1;height:10px;background:var(--soft);border-radius:999px;overflow:hidden}
+.bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--rose),var(--gold))}
+.bar-val{font-size:12px;font-weight:700;min-width:40px;text-align:right}
+.totals-row{display:flex;justify-content:space-between;padding:10px 12px;border-radius:12px;background:var(--soft);font-weight:700;font-size:13px;margin-top:6px}
+.tab-bar{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-bar button{border:1px solid var(--line);background:#fff;color:var(--muted);padding:8px 14px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;flex-shrink:0}
+.tab-bar button.active{background:var(--rose);color:#fff;border-color:var(--rose)}
+.search-box{margin-bottom:12px}
+.search-box input{background:var(--soft)}
+.month-picker{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.month-picker button{border:0;background:var(--soft);border-radius:999px;font-size:16px;cursor:pointer;color:var(--text);padding:6px 12px}
+.month-picker span{font-size:14px;font-weight:700;flex:1;text-align:center}
+.profit-pos{color:var(--green)}.profit-neg{color:var(--red)}
+.pago-pago{color:var(--green);font-weight:700;font-size:11px}
+.pago-parcial{color:var(--gold);font-weight:700;font-size:11px}
+.pago-pendente{color:var(--red);font-weight:700;font-size:11px}
+.itens-box{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:12px}
+.itens-header{display:grid;grid-template-columns:1fr 58px 90px 32px;gap:4px;padding:8px 10px;background:var(--soft);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.item-row{display:grid;grid-template-columns:1fr 58px 90px 32px;gap:4px;padding:6px 8px;border-top:1px solid var(--line);align-items:center}
+.item-row input{padding:8px 8px;border-radius:10px;font-size:14px;border:1px solid var(--line)}
+.item-row input[type=number]{text-align:right}
+.item-del{border:0;background:none;color:var(--red);font-size:20px;cursor:pointer;padding:0;line-height:1;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0}
+.item-del:hover{background:#fce9eb}
+.itens-footer{padding:8px 12px;border-top:1px solid var(--line);background:var(--soft);display:flex;justify-content:space-between;font-size:13px;font-weight:700}
+.add-item-btn{display:flex;align-items:center;gap:6px;border:1px dashed var(--rose);background:#fff;color:var(--rose-s);padding:11px 14px;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;width:100%;justify-content:center;margin-bottom:12px}
+.add-item-btn:hover{background:var(--soft)}
+.product-card{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff;margin-bottom:10px}
+.product-card .head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
+.info-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
+.info-col{font-size:12px}
+.info-col span{color:var(--muted);display:block}
+.info-col strong{font-size:14px}
+.stock-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700}
+  </style>
+</head>
+<body>
+<main>
+
+  <!-- DASHBOARD -->
+  <section class="page active" id="pgDash">
+    <h2>Atelie do Laco</h2>
+    <p class="subtitle" id="dashSubtitle"></p>
+    <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="card"><h3>Pedidos por status</h3><div id="statusChart"></div></div>
+    <div class="card"><h3>Resultado do mes</h3><div id="monthResult"></div></div>
+    <div class="card"><h3>Proximas entregas</h3><div id="nextDeliveries"></div></div>
+  </section>
+
+  <!-- LISTA PEDIDOS -->
+  <section class="page" id="pgPedidos">
+    <h2>Pedidos</h2>
+    <p class="subtitle">Entrada, producao e entrega</p>
+    <div class="tab-bar" id="orderTabs">
+      <button class="active" data-filter="all">Todos</button>
+      <button data-filter="novo">Novos</button>
+      <button data-filter="producao">Producao</button>
+      <button data-filter="pronto">Prontos</button>
+      <button data-filter="entregue">Entregues</button>
+    </div>
+    <div class="search-box"><input id="orderSearch" placeholder="Buscar cliente ou item..."/></div>
+    <div id="ordersList"></div>
+    <div style="height:14px"></div>
+    <button class="btn btn-primary btn-full" onclick="openOrderForm()">+ Novo Pedido</button>
+  </section>
+
+  <!-- FORM PEDIDO -->
+  <section class="page" id="pgOrderForm">
+    <h2 id="orderFormTitle">Novo Pedido</h2>
+    <p class="subtitle">Dados do cliente e itens</p>
+    <form id="orderForm" onsubmit="submitOrder(event)">
+      <input id="orderId" type="hidden"/>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Cliente</h3>
+        <div class="form-group"><label>Nome *</label><input id="oCliente" required placeholder="Nome do cliente" autocomplete="off"/></div>
+        <div class="form-row">
+          <div class="form-group"><label>WhatsApp</label><input id="oWhats" placeholder="(00) 00000-0000" type="tel"/></div>
+          <div class="form-group"><label>Origem</label>
+            <select id="oOrigem"><option>Instagram</option><option>WhatsApp</option><option>Indicacao</option><option>Feira</option><option>Loja fisica</option><option>Outro</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Itens do Pedido</h3>
+        <div class="form-group">
+          <label>Adicionar do catalogo</label>
+          <div style="display:flex;gap:8px">
+            <select id="productPicker" style="flex:1"><option value="">Selecionar produto</option></select>
+            <button type="button" onclick="addItemFromCatalog()" style="flex-shrink:0;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--soft);font-weight:600;cursor:pointer;font-size:13px">+ Adicionar</button>
+          </div>
+        </div>
+        <div class="itens-box" id="itensBox">
+          <div class="itens-header">
+            <span>Descricao</span><span style="text-align:center">Qtd</span><span style="text-align:right">Valor un.</span><span></span>
+          </div>
+          <div id="itensList"></div>
+          <div class="itens-footer" id="itensFooter" style="display:none">
+            <span>Total do pedido</span><span id="itensTotal">R$ 0,00</span>
+          </div>
+        </div>
+        <button type="button" class="add-item-btn" onclick="addItemRow()">+ Adicionar item manualmente</button>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Entrega e Pagamento</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Status</label>
+            <select id="oStatus">
+              <option value="novo">Novo pedido</option><option value="producao">Em producao</option>
+              <option value="pronto">Pronto</option><option value="entregue">Entregue</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Data de entrega</label><input id="oEntrega" type="date"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Custo material (R$)</label><input id="oCusto" type="number" min="0" step="0.01" placeholder="0,00"/></div>
+          <div class="form-group"><label>Outras despesas (R$)</label><input id="oDespesas" type="number" min="0" step="0.01" placeholder="0,00"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Pagamento</label>
+            <select id="oPgto"><option>Pix</option><option>Dinheiro</option><option>Cartao</option><option>Transferencia</option></select>
+          </div>
+          <div class="form-group"><label>Situacao</label>
+            <select id="oPago"><option value="pendente">Pendente</option><option value="parcial">Parcial</option><option value="pago">Pago</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label>Observacoes</label>
+          <textarea id="oObs" rows="2" placeholder="Cor, personalizacao, detalhes..."></textarea>
+        </div>
+      </div>
+      <button class="btn btn-primary" type="submit" id="orderSubmitBtn">Salvar Pedido</button>
+      <div style="height:8px"></div>
+      <button class="btn btn-outline btn-full" type="button" id="deleteOrderBtn" style="display:none;color:var(--red)">Excluir este pedido</button>
+      <div style="height:6px"></div>
+      <button class="btn btn-outline btn-full" type="button" onclick="goTo('pgPedidos')">Cancelar</button>
+    </form>
+  </section>
+
+  <!-- PRODUTOS -->
+  <section class="page" id="pgProdutos">
+    <h2>Produtos</h2>
+    <p class="subtitle">Catalogo e controle de estoque</p>
+    <div class="search-box"><input id="prodSearch" placeholder="Buscar produto..."/></div>
+    <div id="productsList"></div>
+    <div style="height:14px"></div>
+    <button class="btn btn-primary btn-full" onclick="openProdForm()">+ Novo Produto</button>
+  </section>
+
+  <!-- FORM PRODUTO -->
+  <section class="page" id="pgProdForm">
+    <h2 id="prodFormTitle">Novo Produto</h2>
+    <p class="subtitle">Dados do produto e estoque</p>
+    <form id="prodForm" onsubmit="submitProd(event)">
+      <input id="prodId" type="hidden"/>
+      <div class="form-group"><label>Nome *</label><input id="pNome" required placeholder="Ex: Laco M Liso Rosa Bebe"/></div>
+      <div class="form-group"><label>Categoria</label>
+        <select id="pCategoria"><option>Laco infantil</option><option>Laco feminino adulto</option><option>Tiara</option><option>Faixinha</option><option>Kit personalizado</option><option>Outro</option></select>
+      </div>
+      <div class="form-group"><label>Descricao</label>
+        <textarea id="pDesc" rows="2" placeholder="Tamanho, tecido, cores..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Preco de venda (R$) *</label><input id="pPreco" type="number" min="0" step="0.01" required placeholder="0,00"/></div>
+        <div class="form-group"><label>Custo de producao (R$)</label><input id="pCusto" type="number" min="0" step="0.01" placeholder="0,00"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Estoque atual (un)</label><input id="pEstoque" type="number" min="0" value="0"/></div>
+        <div class="form-group"><label>Estoque minimo (un)</label><input id="pEstoqueMin" type="number" min="0" value="3"/></div>
+      </div>
+      <div class="form-group"><label>Observacoes</label>
+        <textarea id="pObs" rows="2" placeholder="Fornecedor, tempo de producao..."></textarea>
+      </div>
+      <button class="btn btn-primary" type="submit" id="prodSubmitBtn">Salvar Produto</button>
+      <div style="height:8px"></div>
+      <button class="btn btn-outline btn-full" type="button" id="deleteProdBtn" style="display:none;color:var(--red)">Excluir produto</button>
+      <div style="height:6px"></div>
+      <button class="btn btn-outline btn-full" type="button" onclick="goTo('pgProdutos')">Cancelar</button>
+    </form>
+  </section>
+
+  <!-- FINANCEIRO -->
+  <section class="page" id="pgFinanceiro">
+    <h2>Financeiro</h2>
+    <p class="subtitle">Resultado operacional</p>
+    <div class="month-picker">
+      <button onclick="changeMonth(-1)">&#8592;</button>
+      <span id="monthLabel"></span>
+      <button onclick="changeMonth(1)">&#8594;</button>
+    </div>
+    <div class="kpi-grid" id="finKpis"></div>
+    <div class="card"><h3>Resultado do mes</h3><div id="finResultado"></div></div>
+    <div class="card"><h3>Pedido a pedido</h3><div id="finOrders"></div></div>
+    <div class="card"><h3>Receita por origem</h3><div id="finSources"></div></div>
+  </section>
+
+  <!-- MAIS -->
+  <section class="page" id="pgMais">
+    <h2>Mais</h2>
+    <p class="subtitle">Clientes, ajustes e backup</p>
+    <div class="card">
+      <h3>Clientes</h3>
+      <div class="search-box" style="margin-top:4px"><input id="clientSearch" placeholder="Buscar cliente..."/></div>
+      <div id="clientsList"></div>
+    </div>
+    <div class="card">
+      <h3>Backup</h3>
+      <p class="small">Exporte todos os dados para seguranca.</p>
+      <button class="btn btn-primary" onclick="exportData()" style="margin-top:8px">Baixar backup (.json)</button>
+      <div style="margin-top:14px">
+        <p class="small">Importar backup salvo anteriormente:</p>
+        <input id="importFile" type="file" accept=".json" style="margin-top:6px"/>
+        <button class="btn btn-success btn-full" onclick="importData()" style="margin-top:8px">Importar backup</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Resetar sistema</h3>
+      <p class="small">Apaga todos os dados permanentemente.</p>
+      <button class="btn btn-danger" onclick="resetAll()" style="margin-top:8px">Apagar todos os dados</button>
+    </div>
+  </section>
+
+</main>
+
+<nav class="bottom-nav">
+  <button class="active" data-page="pgDash">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Inicio
+  </button>
+  <button data-page="pgPedidos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Pedidos
+  </button>
+  <button data-page="pgProdutos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg>
+    Produtos
+  </button>
+  <button data-page="pgFinanceiro">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    Financeiro
+  </button>
+  <button data-page="pgMais">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
+    Mais
+  </button>
+</nav>
+
+<script>
+const $ = id => document.getElementById(id);
+const BRL = v => Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const fmtDate = iso => iso ? new Date(iso+'T12:00:00').toLocaleDateString('pt-BR') : '-';
+const uid = () => crypto.randomUUID();
+const MONTHS = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const K_ORDERS='atelie_orders_v3', K_PRODUCTS='atelie_products_v3';
+const STATUS={novo:{label:'Novo pedido',cls:'st-novo'},producao:{label:'Em producao',cls:'st-producao'},pronto:{label:'Pronto',cls:'st-pronto'},entregue:{label:'Entregue',cls:'st-entregue'},cancelado:{label:'Cancelado',cls:'st-cancelado'}};
+
+let orders=[], products=[], selMonth=new Date().getMonth(), selYear=new Date().getFullYear();
+let formItens=[];
+
+function loadAll(){
+  try{orders=JSON.parse(localStorage.getItem(K_ORDERS))||[];}catch{orders=[];}
+  try{products=JSON.parse(localStorage.getItem(K_PRODUCTS))||[];}catch{products=[];}
+}
+function saveAll(){localStorage.setItem(K_ORDERS,JSON.stringify(orders));localStorage.setItem(K_PRODUCTS,JSON.stringify(products));}
+
+function goTo(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  $(pageId).classList.add('active');
+  document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===pageId));
+  window.scrollTo(0,0);
+  if(pageId==='pgDash') renderDashboard();
+  if(pageId==='pgPedidos') renderOrders();
+  if(pageId==='pgProdutos') renderProducts();
+  if(pageId==='pgFinanceiro') renderFinanceiro();
+  if(pageId==='pgMais') renderClientes();
+}
+document.querySelectorAll('.bottom-nav button').forEach(b=>b.addEventListener('click',()=>goTo(b.dataset.page)));
+
+function orderTotal(o){
+  if(o.itens&&o.itens.length) return o.itens.reduce((s,i)=>s+Number(i.precoUnit||0)*Number(i.qtd||1),0);
+  return Number(o.valor||0);
+}
+function itensSummary(o){
+  if(o.itens&&o.itens.length){
+    if(o.itens.length===1) return o.itens[0].qtd+'x '+o.itens[0].desc;
+    const tot=o.itens.reduce((s,i)=>s+Number(i.qtd||1),0);
+    return o.itens.length+' tipo(s) - '+tot+' pecas no total';
+  }
+  return o.descricao||'-';
+}
+function totalPecas(o){
+  if(o.itens&&o.itens.length) return o.itens.reduce((s,i)=>s+Number(i.qtd||1),0);
+  return Number(o.qtd||0);
+}
+
+function renderDashboard(){
+  const now=new Date(), mn=now.getMonth(), yr=now.getFullYear();
+  $('dashSubtitle').textContent=MONTHS[mn]+' de '+yr;
+  const thisMonth=orders.filter(o=>{const d=new Date(o.criado);return d.getMonth()===mn&&d.getFullYear()===yr&&o.status!=='cancelado';});
+  const ent=thisMonth.filter(o=>o.status==='entregue');
+  const fat=ent.reduce((s,o)=>s+orderTotal(o),0);
+  const cus=thisMonth.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
+  const luc=fat-cus;
+  const pend=orders.filter(o=>o.pago!=='pago'&&o.status!=='cancelado').length;
+  const estBx=products.filter(p=>Number(p.estoque||0)<=Number(p.estoqueMin||0)).length;
+  $('kpiGrid').innerHTML=
+    '<div class="kpi kpi-hl"><div class="label">Faturamento</div><div class="value">'+BRL(fat)+'</div><div class="sub">Entregues este mes</div></div>'+
+    '<div class="kpi"><div class="label">Lucro</div><div class="value '+(luc>=0?'profit-pos':'profit-neg')+'">'+BRL(luc)+'</div><div class="sub">Receita menos custos</div></div>'+
+    '<div class="kpi"><div class="label">Pedidos</div><div class="value">'+thisMonth.length+'</div><div class="sub">Este mes</div></div>'+
+    '<div class="kpi"><div class="label">'+(pend?'Pgto pendente':'Pgto pendente')+'</div><div class="value" style="'+(pend?'color:var(--red)':'')+'">'+pend+'</div><div class="sub">'+(estBx?estBx+' prod. estoque baixo':'Estoque OK')+'</div></div>';
+  const counts={novo:0,producao:0,pronto:0,entregue:0};
+  orders.forEach(o=>{if(counts[o.status]!==undefined)counts[o.status]++;});
+  const maxC=Math.max(1,...Object.values(counts));
+  $('statusChart').innerHTML=Object.entries(counts).map(([k,v])=>'<div class="bar-row"><span class="bar-label">'+STATUS[k].label+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(v/maxC*100)+'%"></div></div><span class="bar-val">'+v+'</span></div>').join('') || '<div class="empty">Nenhum pedido ainda</div>';
+  const rec=ent.reduce((s,o)=>s+orderTotal(o),0), desp=thisMonth.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
+  $('monthResult').innerHTML=rec===0&&desp===0?'<div class="empty">Nenhum dado financeiro este mes</div>':
+    '<div class="totals-row"><span>Receita</span><span class="profit-pos">'+BRL(rec)+'</span></div>'+
+    '<div class="totals-row"><span>Custos + despesas</span><span class="profit-neg">'+BRL(desp)+'</span></div>'+
+    '<div class="totals-row" style="background:'+(rec-desp>=0?'#e7f4eb':'#fce9eb')+'"><span><strong>Resultado</strong></span><span class="'+(rec-desp>=0?'profit-pos':'profit-neg')+'">'+BRL(rec-desp)+'</span></div>';
+  const up=orders.filter(o=>o.status!=='entregue'&&o.status!=='cancelado'&&o.entrega).sort((a,b)=>a.entrega.localeCompare(b.entrega)).slice(0,5);
+  $('nextDeliveries').innerHTML=up.length?up.map(o=>'<div class="list-item" onclick="openOrderForm(\''+o.id+'\')"><div class="head"><strong>'+o.cliente+'</strong><span class="status '+STATUS[o.status].cls+'">'+STATUS[o.status].label+'</span></div><div class="small">'+itensSummary(o)+' - Entrega: '+fmtDate(o.entrega)+' - <span class="pago-'+o.pago+'">'+o.pago.toUpperCase()+'</span></div></div>').join(''):'<div class="empty">Nenhuma entrega pendente</div>';
+}
+
+function renderOrders(){
+  const filter=document.querySelector('#orderTabs .active')?.dataset.filter||'all';
+  const search=($('orderSearch')?.value||'').toLowerCase();
+  let list=[...orders];
+  if(filter!=='all') list=list.filter(o=>o.status===filter);
+  if(search) list=list.filter(o=>{const t=(o.itens||[]).map(i=>i.desc).join(' ');return(o.cliente+' '+t+' '+o.origem).toLowerCase().includes(search);});
+  list.sort((a,b)=>new Date(b.criado)-new Date(a.criado));
+  $('ordersList').innerHTML=list.length?list.map(o=>{
+    const tot=orderTotal(o), luc=tot-Number(o.custo||0)-Number(o.despesas||0);
+    return '<div class="list-item" onclick="openOrderForm(\''+o.id+'\')"><div class="head"><div><strong>'+o.cliente+'</strong><div class="small">'+fmtDate(o.entrega)+' - '+o.origem+'</div></div><span class="status '+(STATUS[o.status]?.cls||'st-novo')+'">'+(STATUS[o.status]?.label||o.status)+'</span></div><div class="small" style="margin-bottom:6px">'+itensSummary(o)+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span><strong>'+BRL(tot)+'</strong> - <span class="pago-'+o.pago+'">'+o.pago.toUpperCase()+'</span></span><span class="small '+(luc>=0?'profit-pos':'profit-neg')+'">Lucro '+BRL(luc)+'</span></div></div>';
+  }).join(''):'<div class="empty">Nenhum pedido encontrado</div>';
+}
+document.querySelectorAll('#orderTabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#orderTabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderOrders();}));
+$('orderSearch')?.addEventListener('input',renderOrders);
+
+/* Itens form */
+function renderItensForm(){
+  const list=$('itensList'), footer=$('itensFooter');
+  if(!formItens.length){list.innerHTML='<div style="padding:12px 10px;font-size:13px;color:var(--muted);text-align:center">Nenhum item adicionado</div>';footer.style.display='none';return;}
+  list.innerHTML=formItens.map((it,i)=>'<div class="item-row"><input type="text" value="'+escH(it.desc)+'" placeholder="Descricao" oninput="updItem('+i+',\'desc\',this.value)"/><input type="number" value="'+it.qtd+'" min="1" oninput="updItem('+i+',\'qtd\',this.value)"/><input type="number" value="'+(it.precoUnit||'')+'" min="0" step="0.01" placeholder="0,00" oninput="updItem('+i+',\'precoUnit\',this.value)"/><button type="button" class="item-del" onclick="remItem('+i+')">&#215;</button></div>').join('');
+  recalcTotal(); footer.style.display='flex';
+}
+function escH(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function recalcTotal(){
+  const tot=formItens.reduce((s,i)=>s+Number(i.precoUnit||0)*Number(i.qtd||1),0);
+  $('itensTotal').textContent=BRL(tot);
+  $('itensFooter').style.display=formItens.length?'flex':'none';
+}
+window.updItem=function(i,f,v){if(!formItens[i])return;formItens[i][f]=(f==='qtd'||f==='precoUnit')?Number(v)||0:v;recalcTotal();};
+window.remItem=function(i){formItens.splice(i,1);renderItensForm();};
+window.addItemRow=function(){formItens.push({id:uid(),desc:'',qtd:1,precoUnit:0});renderItensForm();setTimeout(()=>{const rows=$('itensList').querySelectorAll('.item-row');if(rows.length)rows[rows.length-1].querySelector('input').focus();},50);};
+window.addItemFromCatalog=function(){
+  const id=$('productPicker').value; if(!id){alert('Selecione um produto.');return;}
+  const p=products.find(x=>x.id===id); if(!p) return;
+  formItens.push({id:uid(),desc:p.nome+(p.descricao?' - '+p.descricao:''),qtd:1,precoUnit:Number(p.preco)||0});
+  const cur=Number($('oCusto').value||0); $('oCusto').value=(cur+Number(p.custo||0)).toFixed(2);
+  $('productPicker').value='';
+  renderItensForm();
+};
+
+function openOrderForm(id){
+  const picker=$('productPicker');
+  picker.innerHTML='<option value="">Selecionar produto</option>';
+  products.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.nome+' - '+BRL(p.preco);picker.appendChild(o);});
+  const isEdit=!!id;
+  $('orderFormTitle').textContent=isEdit?'Editar Pedido':'Novo Pedido';
+  $('orderSubmitBtn').textContent=isEdit?'Atualizar Pedido':'Salvar Pedido';
+  $('deleteOrderBtn').style.display=isEdit?'block':'none';
+  if(isEdit){
+    const o=orders.find(x=>x.id===id); if(!o) return;
+    $('orderId').value=o.id; $('oCliente').value=o.cliente||''; $('oWhats').value=o.whatsapp||'';
+    $('oOrigem').value=o.origem||'Instagram'; $('oStatus').value=o.status||'novo';
+    $('oEntrega').value=o.entrega||''; $('oCusto').value=o.custo||''; $('oDespesas').value=o.despesas||'';
+    $('oPgto').value=o.pgto||'Pix'; $('oPago').value=o.pago||'pendente'; $('oObs').value=o.obs||'';
+    formItens=o.itens&&o.itens.length?o.itens.map(i=>({...i,id:i.id||uid()})):
+      (o.descricao?[{id:uid(),desc:o.descricao,qtd:Number(o.qtd||1),precoUnit:Number(o.valor||0)/Math.max(1,Number(o.qtd||1))}]:[]);
+  } else {
+    $('orderForm').reset(); $('orderId').value=''; formItens=[];
+  }
+  renderItensForm();
+  goTo('pgOrderForm');
+}
+window.openOrderForm=openOrderForm;
+
+function submitOrder(e){
+  e.preventDefault();
+  if(!formItens.length){alert('Adicione pelo menos um item ao pedido.');return;}
+  if(formItens.some(i=>!i.desc.trim())){alert('Preencha a descricao de todos os itens.');return;}
+  const id=$('orderId').value;
+  const data={cliente:$('oCliente').value.trim(),whatsapp:$('oWhats').value.trim(),origem:$('oOrigem').value,
+    itens:formItens.map(i=>({id:i.id,desc:i.desc.trim(),qtd:Number(i.qtd)||1,precoUnit:Number(i.precoUnit)||0})),
+    custo:Number($('oCusto').value||0),despesas:Number($('oDespesas').value||0),
+    status:$('oStatus').value,entrega:$('oEntrega').value,pgto:$('oPgto').value,pago:$('oPago').value,obs:$('oObs').value.trim()};
+  if(id){const i=orders.findIndex(o=>o.id===id);if(i>-1)orders[i]={...orders[i],...data};}
+  else orders.unshift({id:uid(),...data,criado:new Date().toISOString()});
+  saveAll(); goTo('pgPedidos');
+}
+$('deleteOrderBtn').addEventListener('click',()=>{const id=$('orderId').value;if(!id)return;if(!confirm('Excluir este pedido?'))return;orders=orders.filter(o=>o.id!==id);saveAll();goTo('pgPedidos');});
+
+/* Produtos */
+function stockCls(p){const e=Number(p.estoque||0),m=Number(p.estoqueMin||0);return e===0?'st-zero':e<=m?'st-low':'st-ok';}
+function stockLbl(p){const e=Number(p.estoque||0),m=Number(p.estoqueMin||0);return e===0?'Sem estoque':e<=m?'Estoque baixo':'Em estoque';}
+
+function renderProducts(){
+  const s=($('prodSearch')?.value||'').toLowerCase();
+  let list=[...products]; if(s) list=list.filter(p=>(p.nome+' '+p.categoria).toLowerCase().includes(s));
+  list.sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  $('productsList').innerHTML=list.length?list.map(p=>{
+    const m=p.preco&&p.custo?Math.round(((p.preco-p.custo)/p.preco)*100):0;
+    return '<div class="product-card" onclick="openProdForm(\''+p.id+'\')"><div class="head"><div><strong>'+p.nome+'</strong><div class="small">'+p.categoria+'</div></div><span class="stock-badge '+stockCls(p)+'">'+p.estoque+' un - '+stockLbl(p)+'</span></div>'+(p.descricao?'<div class="small">'+p.descricao+'</div>':'')+'<div class="info-row"><div class="info-col"><span>Venda</span><strong>'+BRL(p.preco)+'</strong></div><div class="info-col"><span>Custo</span><strong>'+BRL(p.custo)+'</strong></div><div class="info-col"><span>Margem</span><strong class="'+(m>=0?'profit-pos':'profit-neg')+'">'+m+'%</strong></div></div></div>';
+  }).join(''):'<div class="empty">Nenhum produto cadastrado ainda</div>';
+}
+$('prodSearch')?.addEventListener('input',renderProducts);
+
+function openProdForm(id){
+  const isEdit=!!id;
+  $('prodFormTitle').textContent=isEdit?'Editar Produto':'Novo Produto';
+  $('prodSubmitBtn').textContent=isEdit?'Atualizar Produto':'Salvar Produto';
+  $('deleteProdBtn').style.display=isEdit?'block':'none';
+  if(isEdit){
+    const p=products.find(x=>x.id===id); if(!p) return;
+    $('prodId').value=p.id; $('pNome').value=p.nome||''; $('pCategoria').value=p.categoria||'Laco infantil';
+    $('pDesc').value=p.descricao||''; $('pPreco').value=p.preco||''; $('pCusto').value=p.custo||'';
+    $('pEstoque').value=p.estoque||0; $('pEstoqueMin').value=p.estoqueMin||3; $('pObs').value=p.obs||'';
+  } else {$('prodForm').reset();$('prodId').value='';$('pEstoque').value=0;$('pEstoqueMin').value=3;}
+  goTo('pgProdForm');
+}
+window.openProdForm=openProdForm;
+
+function submitProd(e){
+  e.preventDefault();
+  const id=$('prodId').value;
+  const data={nome:$('pNome').value.trim(),categoria:$('pCategoria').value,descricao:$('pDesc').value.trim(),preco:Number($('pPreco').value||0),custo:Number($('pCusto').value||0),estoque:Number($('pEstoque').value||0),estoqueMin:Number($('pEstoqueMin').value||0),obs:$('pObs').value.trim()};
+  if(id){const i=products.findIndex(p=>p.id===id);if(i>-1)products[i]={...products[i],...data};}
+  else products.unshift({id:uid(),...data,criado:new Date().toISOString()});
+  saveAll(); goTo('pgProdutos');
+}
+$('deleteProdBtn').addEventListener('click',()=>{const id=$('prodId').value;if(!id)return;if(!confirm('Excluir este produto?'))return;products=products.filter(p=>p.id!==id);saveAll();goTo('pgProdutos');});
+
+/* Financeiro */
+function changeMonth(d){selMonth+=d;if(selMonth>11){selMonth=0;selYear++;}if(selMonth<0){selMonth=11;selYear--;}renderFinanceiro();}
+window.changeMonth=changeMonth;
+
+function renderFinanceiro(){
+  $('monthLabel').textContent=MONTHS[selMonth]+' '+selYear;
+  const mo=orders.filter(o=>{const d=new Date(o.criado);return d.getMonth()===selMonth&&d.getFullYear()===selYear&&o.status!=='cancelado';});
+  const ent=mo.filter(o=>o.status==='entregue');
+  const rec=ent.reduce((s,o)=>s+orderTotal(o),0), cus=mo.reduce((s,o)=>s+Number(o.custo||0),0), des=mo.reduce((s,o)=>s+Number(o.despesas||0),0);
+  const luc=rec-cus-des, tk=ent.length?rec/ent.length:0, mg=rec?Math.round((luc/rec)*100):0, pend=mo.filter(o=>o.pago!=='pago').length;
+  $('finKpis').innerHTML=
+    '<div class="kpi kpi-hl"><div class="label">Receita</div><div class="value">'+BRL(rec)+'</div><div class="sub">'+ent.length+' entregues</div></div>'+
+    '<div class="kpi"><div class="label">Custos totais</div><div class="value">'+BRL(cus+des)+'</div><div class="sub">Material + despesas</div></div>'+
+    '<div class="kpi"><div class="label">Lucro</div><div class="value '+(luc>=0?'profit-pos':'profit-neg')+'">'+BRL(luc)+'</div><div class="sub">Margem: '+mg+'%</div></div>'+
+    '<div class="kpi"><div class="label">Ticket medio</div><div class="value">'+BRL(tk)+'</div><div class="sub">'+pend+' pgto(s) pendente(s)</div></div>';
+  $('finResultado').innerHTML=mo.length===0?'<div class="empty">Nenhum pedido neste mes</div>':
+    '<div class="totals-row"><span>Receita (entregues)</span><span class="profit-pos">'+BRL(rec)+'</span></div>'+
+    '<div class="totals-row"><span>Custo de material</span><span>'+BRL(cus)+'</span></div>'+
+    '<div class="totals-row"><span>Outras despesas</span><span>'+BRL(des)+'</span></div>'+
+    '<div class="totals-row" style="background:'+(luc>=0?'#e7f4eb':'#fce9eb')+'"><span><strong>Lucro liquido</strong></span><span class="'+(luc>=0?'profit-pos':'profit-neg')+'">'+BRL(luc)+'</span></div>';
+  $('finOrders').innerHTML=mo.length?mo.map(o=>{
+    const t=orderTotal(o), l=t-Number(o.custo||0)-Number(o.despesas||0);
+    const itH=(o.itens||[]).map(i=>'<div class="small">&#183; '+i.qtd+'x '+i.desc+' = '+BRL(i.precoUnit*i.qtd)+'</div>').join('');
+    return '<div class="list-item"><div class="head"><strong>'+o.cliente+'</strong><span class="pago-'+o.pago+'">'+o.pago.toUpperCase()+'</span></div>'+itH+'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:8px;font-size:12px"><div><span class="small">Receita</span><div style="font-weight:700">'+BRL(t)+'</div></div><div><span class="small">Custos</span><div style="font-weight:700;color:var(--red)">'+BRL(Number(o.custo||0)+Number(o.despesas||0))+'</div></div><div><span class="small">Lucro</span><div class="'+(l>=0?'profit-pos':'profit-neg')+'" style="font-weight:700">'+BRL(l)+'</div></div></div></div>';
+  }).join(''):'<div class="empty">Nenhum pedido neste mes</div>';
+  const bySrc={};
+  mo.forEach(o=>{bySrc[o.origem]=(bySrc[o.origem]||0)+orderTotal(o);});
+  const maxS=Math.max(1,...Object.values(bySrc));
+  $('finSources').innerHTML=Object.keys(bySrc).length?Object.entries(bySrc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="bar-row"><span class="bar-label">'+k+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(v/maxS*100)+'%"></div></div><span class="bar-val">'+BRL(v)+'</span></div>').join(''):'<div class="empty">Sem dados de origem</div>';
+}
+
+/* Clientes */
+function renderClientes(){
+  const s=($('clientSearch')?.value||'').toLowerCase();
+  const map={};
+  orders.forEach(o=>{const k=o.cliente.toLowerCase().trim();if(!map[k])map[k]={nome:o.cliente,whatsapp:o.whatsapp,origem:o.origem,pedidos:0,total:0,pecas:0,ultimo:o.criado};map[k].pedidos++;map[k].total+=orderTotal(o);map[k].pecas+=totalPecas(o);if(o.criado>map[k].ultimo){map[k].ultimo=o.criado;if(o.whatsapp)map[k].whatsapp=o.whatsapp;}});
+  let list=Object.values(map).sort((a,b)=>b.total-a.total);
+  if(s) list=list.filter(c=>c.nome.toLowerCase().includes(s));
+  $('clientsList').innerHTML=list.length?list.map(c=>'<div class="list-item"><div class="head"><strong>'+c.nome+'</strong><span class="small">'+c.pedidos+' pedido(s) - '+c.pecas+' pecas</span></div><div class="small">'+(c.whatsapp||'Sem WhatsApp')+' - '+c.origem+' - Ultimo: '+fmtDate(c.ultimo?.slice(0,10))+'</div><div class="totals-row" style="margin-top:8px"><span>Total gasto</span><span>'+BRL(c.total)+'</span></div></div>').join(''):'<div class="empty">Nenhum cliente ainda</div>';
+}
+$('clientSearch')?.addEventListener('input',renderClientes);
+
+/* Backup */
+function exportData(){const b=new Blob([JSON.stringify({orders,products,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='atelie-laco-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);}
+window.exportData=exportData;
+function importData(){const file=$('importFile').files[0];if(!file){alert('Selecione um arquivo');return;}const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);orders=Array.isArray(d.orders)?d.orders:[];products=Array.isArray(d.products)?d.products:[];saveAll();renderDashboard();alert('Backup importado com sucesso!');}catch{alert('Arquivo invalido');}};r.readAsText(file);}
+window.importData=importData;
+function resetAll(){if(!confirm('Apagar TODOS os dados? Esta acao nao pode ser desfeita.'))return;localStorage.removeItem(K_ORDERS);localStorage.removeItem(K_PRODUCTS);orders=[];products=[];saveAll();goTo('pgDash');}
+window.resetAll=resetAll;
+
+loadAll();
+renderDashboard();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
