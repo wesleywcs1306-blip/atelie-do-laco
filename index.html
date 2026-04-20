@@ -2,860 +2,351 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="description" content="Ateliê do Laço — Laços artesanais personalizados para meninas e mulheres. Feitos com amor e os melhores materiais. Peça o seu!"/>
   <meta name="theme-color" content="#d8a8ae"/>
-  <link rel="manifest" href="manifest.json"/>
-  <title>Atelie do Laco</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <meta property="og:title" content="Ateliê do Laço"/>
+  <meta property="og:description" content="Laços artesanais personalizados feitos com amor"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://ateliedolaco.com.br"/>
+  <title>Ateliê do Laço — Laços Artesanais Personalizados</title>
   <style>
 :root{
-  --bg:#fdf9f8;--panel:#fff;--soft:#fff4f3;--line:#efdedd;
-  --text:#6f575b;--muted:#9c8589;--rose:#d8a8ae;--rose-s:#c98f98;
-  --gold:#c9a46c;--green:#6e9d7a;--red:#c77982;
-  --shadow:0 8px 24px rgba(201,143,152,.12);--r:18px;
+  --bg:#fdf9f8;--panel:#fff;
+  --rose:#d8a8ae;--rose-d:#c98f98;--rose-l:#f7eeef;--rose-xl:#fdf3f4;
+  --text:#3d2a2e;--muted:#9c8589;--gold:#c9a46c;
+  --wa:#25d366;--wa-d:#1ebe5d;
+  --r:18px;--shadow:0 8px 32px rgba(201,143,152,.14);
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;font-family:-apple-system,system-ui,"Segoe UI",sans-serif;color:var(--text);background:var(--bg)}
-input,select,textarea,button{font-size:16px;font-family:inherit}
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:100;}
-.bottom-nav button{border:0;background:none;color:var(--muted);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;cursor:pointer;min-width:52px;}
-.bottom-nav button.active{color:var(--rose-s)}
-.bottom-nav button svg{width:22px;height:22px;flex-shrink:0}
-main{padding:16px 14px calc(85px + env(safe-area-inset-bottom));max-width:600px;margin:0 auto}
-.page{display:none}.page.active{display:block}
-h2{margin:0 0 4px;font-size:24px}
-.subtitle{color:var(--muted);font-size:13px;margin-bottom:16px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
-.card h3{margin:0 0 12px;font-size:16px}
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--shadow)}
-.kpi .label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700}
-.kpi .value{font-size:22px;font-weight:700;margin-top:4px}
-.kpi .sub{font-size:11px;color:var(--muted);margin-top:2px}
-.kpi-hl{background:linear-gradient(135deg,var(--rose),var(--rose-s));color:#fff;border-color:transparent}
-.kpi-hl .label,.kpi-hl .sub{color:rgba(255,255,255,.8)}
-.form-group{margin-bottom:12px}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
-input,select,textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--text);outline:none}
-input:focus,select:focus,textarea:focus{border-color:var(--rose-s);box-shadow:0 0 0 3px rgba(201,143,152,.12)}
-textarea{resize:vertical}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;border-radius:12px;border:0;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
-.btn-primary{background:linear-gradient(135deg,var(--rose),var(--rose-s));color:#fff;width:100%}
-.btn-success{background:var(--green);color:#fff}
-.btn-danger{background:var(--red);color:#fff;font-size:12px;padding:7px 11px}
-.btn-soft{background:var(--soft);color:var(--text);font-size:12px;padding:7px 11px}
-.btn-outline{background:#fff;color:var(--text);border:1px solid var(--line);font-size:13px;padding:9px 14px}
-.btn-full{width:100%}
-.btn:disabled{opacity:.55;cursor:not-allowed}
-.status{display:inline-flex;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
-.st-novo{background:#fce9eb;color:#b05f6b}
-.st-producao{background:#fff1de;color:#a06a19}
-.st-pronto{background:#e9f0f5;color:#5f7f90}
-.st-entregue{background:#e7f4eb;color:#4b8260}
-.st-cancelado{background:#f5e8ea;color:#9a5e67}
-.st-ok{background:#e7f4eb;color:#4b8260}
-.st-low{background:#fff1de;color:#a06a19}
-.st-zero{background:#fce9eb;color:#b05f6b}
-.list-item{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff;margin-bottom:10px}
-.list-item .head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
-.list-item strong{font-size:14px}
-.small{font-size:12px;color:var(--muted)}
-.empty{padding:24px;text-align:center;border:1px dashed var(--line);border-radius:14px;color:var(--muted);background:#fff;font-size:14px}
-.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.bar-label{font-size:12px;min-width:80px;color:var(--muted)}
-.bar-track{flex:1;height:10px;background:var(--soft);border-radius:999px;overflow:hidden}
-.bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--rose),var(--gold))}
-.bar-val{font-size:12px;font-weight:700;min-width:40px;text-align:right}
-.totals-row{display:flex;justify-content:space-between;padding:10px 12px;border-radius:12px;background:var(--soft);font-weight:700;font-size:13px;margin-top:6px}
-.tab-bar{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
-.tab-bar::-webkit-scrollbar{display:none}
-.tab-bar button{border:1px solid var(--line);background:#fff;color:var(--muted);padding:8px 14px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;flex-shrink:0}
-.tab-bar button.active{background:var(--rose);color:#fff;border-color:var(--rose)}
-.search-box{margin-bottom:12px}
-.search-box input{background:var(--soft)}
-.month-picker{display:flex;align-items:center;gap:8px;margin-bottom:14px}
-.month-picker button{border:0;background:var(--soft);border-radius:999px;font-size:16px;cursor:pointer;color:var(--text);padding:6px 12px}
-.month-picker span{font-size:14px;font-weight:700;flex:1;text-align:center}
-.profit-pos{color:var(--green)}.profit-neg{color:var(--red)}
-.pago-pago{color:var(--green);font-weight:700;font-size:11px}
-.pago-parcial{color:var(--gold);font-weight:700;font-size:11px}
-.pago-pendente{color:var(--red);font-weight:700;font-size:11px}
-.itens-box{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:12px}
-.itens-header{display:grid;grid-template-columns:1fr 58px 90px 32px;gap:4px;padding:8px 10px;background:var(--soft);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
-.item-row{display:grid;grid-template-columns:1fr 58px 90px 32px;gap:4px;padding:6px 8px;border-top:1px solid var(--line);align-items:center}
-.item-row input{padding:8px 8px;border-radius:10px;font-size:14px;border:1px solid var(--line)}
-.item-row input[type=number]{text-align:right}
-.item-del{border:0;background:none;color:var(--red);font-size:20px;cursor:pointer;padding:0;line-height:1;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0}
-.item-del:hover{background:#fce9eb}
-.itens-footer{padding:8px 12px;border-top:1px solid var(--line);background:var(--soft);display:flex;justify-content:space-between;font-size:13px;font-weight:700}
-.add-item-btn{display:flex;align-items:center;gap:6px;border:1px dashed var(--rose);background:#fff;color:var(--rose-s);padding:11px 14px;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;width:100%;justify-content:center;margin-bottom:12px}
-.add-item-btn:hover{background:var(--soft)}
-.product-card{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff;margin-bottom:10px}
-.product-card .head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
-.info-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
-.info-col{font-size:12px}
-.info-col span{color:var(--muted);display:block}
-.info-col strong{font-size:14px}
-.stock-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700}
-/* Login */
-#loginScreen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
-#loginScreen.hidden{display:none}
-.login-logo{font-size:60px;margin-bottom:10px;line-height:1}
-.login-title{font-size:26px;font-weight:700;color:var(--rose-s);margin-bottom:4px;text-align:center}
-.login-sub{color:var(--muted);font-size:13px;margin-bottom:28px;text-align:center}
-.login-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:24px;width:100%;max-width:380px}
-.login-error{color:var(--red);font-size:12px;text-align:center;margin-top:10px;min-height:18px}
-/* Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(80,40,50,.45);z-index:9998;display:flex;align-items:flex-end;justify-content:center}
-.modal-overlay.hidden{display:none}
-.modal-box{background:#fff;border-radius:24px 24px 0 0;padding:24px;width:100%;max-width:600px;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
-.modal-box h3{margin:0 0 16px;font-size:17px}
-.pwd-error{color:var(--red);font-size:12px;margin-bottom:10px;min-height:16px}
-/* Loading overlay */
-#appLoading{position:fixed;inset:0;background:rgba(253,249,248,.88);z-index:9990;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:14px;color:var(--muted)}
-.spinner{width:36px;height:36px;border:3px solid var(--line);border-top-color:var(--rose-s);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,system-ui,'Segoe UI',sans-serif;color:var(--text);background:var(--bg);line-height:1.6}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+
+/* NAV */
+header{position:sticky;top:0;z-index:100;background:rgba(253,249,248,.96);backdrop-filter:blur(12px);border-bottom:1px solid rgba(216,168,174,.2)}
+nav{max-width:1100px;margin:0 auto;padding:0 20px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.logo{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;color:var(--rose-d);white-space:nowrap}
+.logo span{font-size:22px}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{font-size:14px;font-weight:500;color:var(--muted);transition:color .2s}
+.nav-links a:hover{color:var(--rose-d)}
+.nav-cta{background:linear-gradient(135deg,var(--rose),var(--rose-d));color:#fff!important;padding:9px 18px;border-radius:999px;font-size:13px!important;font-weight:600!important;display:flex;align-items:center;gap:6px;transition:opacity .2s!important}
+.nav-cta:hover{opacity:.88}
+.hamburger{display:none;border:0;background:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px}
+.mobile-menu{display:none;flex-direction:column;gap:0;border-top:1px solid var(--rose-l);background:var(--panel)}
+.mobile-menu a{padding:14px 20px;font-size:15px;font-weight:500;color:var(--text);border-bottom:1px solid var(--rose-l)}
+.mobile-menu a:last-child{border-bottom:0;background:var(--rose-xl);color:var(--rose-d);font-weight:700;text-align:center;padding:16px}
+.mobile-menu.open{display:flex}
+
+/* HERO */
+.hero{min-height:92vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:60px 20px}
+.hero-bg{position:absolute;inset:0;background:linear-gradient(145deg,#fdf0f1 0%,#fdf9f8 40%,#fef5e8 100%);z-index:0}
+.hero-deco{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.hero-deco span{position:absolute;font-size:var(--fs,40px);opacity:.07;animation:float var(--dur,8s) ease-in-out infinite;animation-delay:var(--del,0s)}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-18px) rotate(8deg)}}
+.hero-content{position:relative;z-index:1;text-align:center;max-width:600px}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;background:var(--rose-xl);color:var(--rose-d);padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:20px;border:1px solid rgba(216,168,174,.3)}
+.hero h1{font-size:clamp(2.2rem,6vw,3.6rem);font-weight:800;line-height:1.15;margin-bottom:16px;color:var(--text)}
+.hero h1 em{font-style:normal;color:var(--rose-d)}
+.hero-sub{font-size:clamp(15px,2.5vw,18px);color:var(--muted);margin-bottom:36px;max-width:460px;margin-left:auto;margin-right:auto}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-hero{display:inline-flex;align-items:center;gap:8px;background:var(--wa);color:#fff;padding:14px 28px;border-radius:999px;font-size:15px;font-weight:700;transition:background .2s,transform .15s;box-shadow:0 4px 20px rgba(37,211,102,.3)}
+.btn-hero:hover{background:var(--wa-d);transform:translateY(-2px)}
+.btn-hero-sec{display:inline-flex;align-items:center;gap:8px;background:var(--panel);color:var(--text);padding:14px 24px;border-radius:999px;font-size:15px;font-weight:600;border:1.5px solid var(--rose);transition:background .2s}
+.btn-hero-sec:hover{background:var(--rose-xl)}
+.hero-scroll{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;z-index:1}
+.hero-scroll::after{content:'';display:block;width:1px;height:32px;background:var(--rose);margin-top:4px;opacity:.5}
+
+/* SECTION COMMON */
+section{padding:80px 20px}
+.section-inner{max-width:1100px;margin:0 auto}
+.section-tag{display:inline-block;background:var(--rose-xl);color:var(--rose-d);padding:4px 14px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+.section-title{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;margin-bottom:10px}
+.section-sub{color:var(--muted);font-size:15px;max-width:520px}
+.section-head{margin-bottom:48px}
+
+/* PORTFOLIO */
+#portfolio{background:var(--panel)}
+.portfolio-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.port-card{border-radius:var(--r);overflow:hidden;background:var(--bg);border:1px solid rgba(216,168,174,.25);box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s;cursor:pointer}
+.port-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(201,143,152,.2)}
+.port-img{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;position:relative;overflow:hidden}
+.port-img-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+.port-emoji{font-size:52px;line-height:1}
+.port-img-label{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.port-body{padding:16px}
+.port-body h3{font-size:15px;font-weight:700;margin-bottom:4px}
+.port-body p{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.port-btn{display:inline-flex;align-items:center;gap:5px;background:var(--rose-xl);color:var(--rose-d);padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;transition:background .2s}
+.port-btn:hover{background:var(--rose-l)}
+
+/* SOBRE */
+#sobre{background:var(--bg)}
+.sobre-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.sobre-deco{display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,var(--rose-l),var(--rose-xl));border-radius:32px;aspect-ratio:1;font-size:100px;box-shadow:var(--shadow)}
+.sobre-text p{font-size:15px;color:var(--muted);line-height:1.8;margin-bottom:16px}
+.sobre-text p:last-of-type{margin-bottom:24px}
+.sobre-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.pill{display:inline-flex;align-items:center;gap:5px;background:var(--panel);border:1px solid rgba(216,168,174,.4);padding:7px 14px;border-radius:999px;font-size:12px;font-weight:600;color:var(--text)}
+
+/* CONTATO */
+#contato{background:linear-gradient(145deg,#fdf0f1,var(--rose-xl))}
+.contato-inner{text-align:center;max-width:540px;margin:0 auto}
+.contato-inner .section-tag,.contato-inner .section-title,.contato-inner .section-sub{text-align:center}
+.contato-inner .section-sub{margin:0 auto 40px}
+.contato-btns{display:flex;flex-direction:column;gap:14px;max-width:360px;margin:0 auto}
+.btn-wa-big{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--wa);color:#fff;padding:16px 28px;border-radius:16px;font-size:16px;font-weight:700;transition:background .2s,transform .15s;box-shadow:0 4px 24px rgba(37,211,102,.3)}
+.btn-wa-big:hover{background:var(--wa-d);transform:translateY(-2px)}
+.btn-ig{display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;padding:16px 28px;border-radius:16px;font-size:16px;font-weight:700;transition:opacity .2s,transform .15s}
+.btn-ig:hover{opacity:.88;transform:translateY(-2px)}
+.contato-info{margin-top:32px;font-size:13px;color:var(--muted)}
+.contato-info a{color:var(--rose-d);font-weight:600}
+
+/* FOOTER */
+footer{background:var(--text);color:rgba(255,255,255,.6);padding:32px 20px}
+.footer-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.footer-logo{color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;gap:6px}
+.footer-links{display:flex;gap:20px;font-size:13px}
+.footer-links a{transition:color .2s}
+.footer-links a:hover{color:#fff}
+.footer-admin{font-size:11px;opacity:.4;transition:opacity .2s}
+.footer-admin:hover{opacity:.8}
+
+/* FLOATING WHATSAPP */
+.wa-float{position:fixed;bottom:24px;right:20px;z-index:99;width:56px;height:56px;background:var(--wa);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,.4);transition:transform .2s,box-shadow .2s}
+.wa-float:hover{transform:scale(1.1);box-shadow:0 8px 28px rgba(37,211,102,.5)}
+.wa-float svg{width:30px;height:30px;fill:#fff}
+.wa-tooltip{position:absolute;right:calc(100% + 10px);background:var(--text);color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s}
+.wa-float:hover .wa-tooltip{opacity:1}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .sobre-grid{grid-template-columns:1fr;gap:32px}
+  .sobre-deco{max-width:200px;margin:0 auto;font-size:70px}
+}
+@media(max-width:700px){
+  .nav-links{display:none}
+  .hamburger{display:block}
+  .portfolio-grid{grid-template-columns:1fr 1fr;gap:14px}
+  section{padding:60px 16px}
+  .hero-btns{flex-direction:column;align-items:center}
+  .footer-inner{flex-direction:column;text-align:center}
+  .footer-links{justify-content:center}
+}
+@media(max-width:400px){
+  .portfolio-grid{grid-template-columns:1fr}
+}
   </style>
 </head>
 <body>
 
-<!-- LOADING -->
-<div id="appLoading">
-  <div class="spinner"></div>
-  <span>Carregando...</span>
-</div>
-
-<main>
-
-  <!-- DASHBOARD -->
-  <section class="page active" id="pgDash">
-    <h2>Atelie do Laco</h2>
-    <p class="subtitle" id="dashSubtitle"></p>
-    <div class="kpi-grid" id="kpiGrid"></div>
-    <div class="card"><h3>Pedidos por status</h3><div id="statusChart"></div></div>
-    <div class="card"><h3>Resultado do mes</h3><div id="monthResult"></div></div>
-    <div class="card"><h3>Proximas entregas</h3><div id="nextDeliveries"></div></div>
-  </section>
-
-  <!-- LISTA PEDIDOS -->
-  <section class="page" id="pgPedidos">
-    <h2>Pedidos</h2>
-    <p class="subtitle">Entrada, producao e entrega</p>
-    <div class="tab-bar" id="orderTabs">
-      <button class="active" data-filter="all">Todos</button>
-      <button data-filter="novo">Novos</button>
-      <button data-filter="producao">Producao</button>
-      <button data-filter="pronto">Prontos</button>
-      <button data-filter="entregue">Entregues</button>
+<!-- NAV -->
+<header>
+  <nav>
+    <a href="#inicio" class="logo"><span>🎀</span> Ateliê do Laço</a>
+    <div class="nav-links">
+      <a href="#portfolio">Portfólio</a>
+      <a href="#sobre">Sobre</a>
+      <a href="#contato">Contato</a>
+      <a href="https://wa.me/5517996492252?text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20fazer%20um%20pedido%20%F0%9F%8E%80" class="nav-cta" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.115 1.535 5.845L.057 23.5a.5.5 0 00.614.614l5.654-1.478A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.934 0-3.742-.522-5.293-1.432l-.38-.222-3.353.877.877-3.354-.222-.38A9.955 9.955 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        WhatsApp
+      </a>
     </div>
-    <div class="search-box"><input id="orderSearch" placeholder="Buscar cliente ou item..."/></div>
-    <div id="ordersList"></div>
-    <div style="height:14px"></div>
-    <button class="btn btn-primary btn-full" onclick="openOrderForm()">+ Novo Pedido</button>
-  </section>
-
-  <!-- FORM PEDIDO -->
-  <section class="page" id="pgOrderForm">
-    <h2 id="orderFormTitle">Novo Pedido</h2>
-    <p class="subtitle">Dados do cliente e itens</p>
-    <form id="orderForm" onsubmit="submitOrder(event)">
-      <input id="orderId" type="hidden"/>
-      <div class="card" style="margin-bottom:14px">
-        <h3>Cliente</h3>
-        <div class="form-group"><label>Nome *</label><input id="oCliente" required placeholder="Nome do cliente" autocomplete="off"/></div>
-        <div class="form-row">
-          <div class="form-group"><label>WhatsApp</label><input id="oWhats" placeholder="(00) 00000-0000" type="tel"/></div>
-          <div class="form-group"><label>Origem</label>
-            <select id="oOrigem"><option>Instagram</option><option>WhatsApp</option><option>Indicacao</option><option>Feira</option><option>Loja fisica</option><option>Outro</option></select>
-          </div>
-        </div>
-      </div>
-      <div class="card" style="margin-bottom:14px">
-        <h3>Itens do Pedido</h3>
-        <div class="form-group">
-          <label>Adicionar do catalogo</label>
-          <div style="display:flex;gap:8px">
-            <select id="productPicker" style="flex:1"><option value="">Selecionar produto</option></select>
-            <button type="button" onclick="addItemFromCatalog()" style="flex-shrink:0;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--soft);font-weight:600;cursor:pointer;font-size:13px">+ Adicionar</button>
-          </div>
-        </div>
-        <div class="itens-box" id="itensBox">
-          <div class="itens-header">
-            <span>Descricao</span><span style="text-align:center">Qtd</span><span style="text-align:right">Valor un.</span><span></span>
-          </div>
-          <div id="itensList"></div>
-          <div class="itens-footer" id="itensFooter" style="display:none">
-            <span>Total do pedido</span><span id="itensTotal">R$ 0,00</span>
-          </div>
-        </div>
-        <button type="button" class="add-item-btn" onclick="addItemRow()">+ Adicionar item manualmente</button>
-      </div>
-      <div class="card" style="margin-bottom:14px">
-        <h3>Entrega e Pagamento</h3>
-        <div class="form-row">
-          <div class="form-group"><label>Status</label>
-            <select id="oStatus">
-              <option value="novo">Novo pedido</option><option value="producao">Em producao</option>
-              <option value="pronto">Pronto</option><option value="entregue">Entregue</option>
-              <option value="cancelado">Cancelado</option>
-            </select>
-          </div>
-          <div class="form-group"><label>Data de entrega</label><input id="oEntrega" type="date"/></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Custo material (R$)</label><input id="oCusto" type="number" min="0" step="0.01" placeholder="0,00"/></div>
-          <div class="form-group"><label>Outras despesas (R$)</label><input id="oDespesas" type="number" min="0" step="0.01" placeholder="0,00"/></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Desconto</label>
-            <div style="display:flex;gap:6px;align-items:center">
-              <select id="oDescontoTipo" style="width:72px;flex-shrink:0;padding:11px 8px" onchange="recalcTotal()"><option value="percent">%</option><option value="fixed">R$</option></select>
-              <input id="oDesconto" type="number" min="0" step="0.01" placeholder="0" oninput="recalcTotal()"/>
-            </div>
-          </div>
-          <div class="form-group"><label>Valor final</label>
-            <div id="oValorFinal" style="padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--soft);font-weight:700;font-size:15px">—</div>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Pagamento</label>
-            <select id="oPgto"><option>Pix</option><option>Dinheiro</option><option>Cartao</option><option>Transferencia</option></select>
-          </div>
-          <div class="form-group"><label>Situacao</label>
-            <select id="oPago"><option value="pendente">Pendente</option><option value="parcial">Parcial</option><option value="pago">Pago</option></select>
-          </div>
-        </div>
-        <div class="form-group"><label>Observacoes</label>
-          <textarea id="oObs" rows="2" placeholder="Cor, personalizacao, detalhes..."></textarea>
-        </div>
-      </div>
-      <button class="btn btn-primary" type="submit" id="orderSubmitBtn">Salvar Pedido</button>
-      <div style="height:8px"></div>
-      <button class="btn btn-outline btn-full" type="button" id="deleteOrderBtn" style="display:none;color:var(--red)">Excluir este pedido</button>
-      <div style="height:6px"></div>
-      <button class="btn btn-outline btn-full" type="button" onclick="goTo('pgPedidos')">Cancelar</button>
-    </form>
-  </section>
-
-  <!-- PRODUTOS -->
-  <section class="page" id="pgProdutos">
-    <h2>Produtos</h2>
-    <p class="subtitle">Catalogo e controle de estoque</p>
-    <div class="search-box"><input id="prodSearch" placeholder="Buscar produto..."/></div>
-    <div id="productsList"></div>
-    <div style="height:14px"></div>
-    <button class="btn btn-primary btn-full" onclick="openProdForm()">+ Novo Produto</button>
-  </section>
-
-  <!-- FORM PRODUTO -->
-  <section class="page" id="pgProdForm">
-    <h2 id="prodFormTitle">Novo Produto</h2>
-    <p class="subtitle">Dados do produto e estoque</p>
-    <form id="prodForm" onsubmit="submitProd(event)">
-      <input id="prodId" type="hidden"/>
-      <div class="form-group"><label>Nome *</label><input id="pNome" required placeholder="Ex: Laco M Liso Rosa Bebe"/></div>
-      <div class="form-group"><label>Categoria</label>
-        <select id="pCategoria"><option>Laco infantil</option><option>Laco feminino adulto</option><option>Tiara</option><option>Faixinha</option><option>Kit personalizado</option><option>Outro</option></select>
-      </div>
-      <div class="form-group"><label>Descricao</label>
-        <textarea id="pDesc" rows="2" placeholder="Tamanho, tecido, cores..."></textarea>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Preco de venda (R$) *</label><input id="pPreco" type="number" min="0" step="0.01" required placeholder="0,00"/></div>
-        <div class="form-group"><label>Custo de producao (R$)</label><input id="pCusto" type="number" min="0" step="0.01" placeholder="0,00"/></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Estoque atual (un)</label><input id="pEstoque" type="number" min="0" value="0"/></div>
-        <div class="form-group"><label>Estoque minimo (un)</label><input id="pEstoqueMin" type="number" min="0" value="3"/></div>
-      </div>
-      <div class="form-group"><label>Observacoes</label>
-        <textarea id="pObs" rows="2" placeholder="Fornecedor, tempo de producao..."></textarea>
-      </div>
-      <button class="btn btn-primary" type="submit" id="prodSubmitBtn">Salvar Produto</button>
-      <div style="height:8px"></div>
-      <button class="btn btn-outline btn-full" type="button" id="deleteProdBtn" style="display:none;color:var(--red)">Excluir produto</button>
-      <div style="height:6px"></div>
-      <button class="btn btn-outline btn-full" type="button" onclick="goTo('pgProdutos')">Cancelar</button>
-    </form>
-  </section>
-
-  <!-- FINANCEIRO -->
-  <section class="page" id="pgFinanceiro">
-    <h2>Financeiro</h2>
-    <p class="subtitle">Resultado operacional</p>
-    <div class="month-picker">
-      <button onclick="changeMonth(-1)">&#8592;</button>
-      <span id="monthLabel"></span>
-      <button onclick="changeMonth(1)">&#8594;</button>
-    </div>
-    <div class="kpi-grid" id="finKpis"></div>
-    <div class="card"><h3>Resultado do mes</h3><div id="finResultado"></div></div>
-    <div class="card"><h3>Pedido a pedido</h3><div class="search-box" style="margin-bottom:10px"><input id="finSearch" placeholder="Buscar cliente..." oninput="renderFinOrders()"/></div><div id="finOrders"></div></div>
-    <div class="card"><h3>Receita por origem</h3><div id="finSources"></div></div>
-  </section>
-
-  <!-- MAIS -->
-  <section class="page" id="pgMais">
-    <h2>Mais</h2>
-    <p class="subtitle">Clientes, ajustes e backup</p>
-    <div class="card">
-      <h3>Conta</h3>
-      <div id="loginInfo" class="small" style="margin-bottom:14px;color:var(--muted)"></div>
-      <button class="btn btn-outline btn-full" onclick="openChgPwd()" style="margin-bottom:8px">🔑 Alterar senha</button>
-      <button class="btn btn-danger btn-full" onclick="doLogout()">Sair do sistema</button>
-    </div>
-    <div class="card">
-      <h3>Clientes</h3>
-      <div class="search-box" style="margin-top:4px"><input id="clientSearch" placeholder="Buscar cliente..."/></div>
-      <div id="clientsList"></div>
-    </div>
-    <div class="card">
-      <h3>Backup</h3>
-      <p class="small">Exporte todos os dados para seguranca.</p>
-      <button class="btn btn-primary" onclick="exportData()" style="margin-top:8px">Baixar backup (.json)</button>
-      <div style="margin-top:14px">
-        <p class="small">Importar backup salvo anteriormente:</p>
-        <input id="importFile" type="file" accept=".json" style="margin-top:6px"/>
-        <button class="btn btn-success btn-full" onclick="importData()" style="margin-top:8px">Importar backup</button>
-      </div>
-    </div>
-    <div class="card">
-      <h3>Resetar sistema</h3>
-      <p class="small">Apaga todos os dados permanentemente.</p>
-      <button class="btn btn-danger" onclick="resetAll()" style="margin-top:8px">Apagar todos os dados</button>
-    </div>
-  </section>
-
-</main>
-
-<!-- TELA DE LOGIN -->
-<div id="loginScreen">
-  <div class="login-logo">🎀</div>
-  <div class="login-title">Atelie do Laco</div>
-  <div class="login-sub">Acesso restrito — administrador</div>
-  <div class="login-card">
-    <div class="form-group">
-      <label>Email</label>
-      <input id="loginEmail" type="email" placeholder="seu@email.com" autocomplete="email" autocorrect="off" autocapitalize="none" spellcheck="false"/>
-    </div>
-    <div class="form-group">
-      <label>Senha</label>
-      <input id="loginPass" type="password" placeholder="••••••" autocomplete="current-password"/>
-    </div>
-    <button id="loginBtn" class="btn btn-primary" onclick="doLogin()" style="margin-top:4px">Entrar</button>
-    <div id="loginError" class="login-error"></div>
+    <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+      <svg id="hambIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </nav>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#portfolio" onclick="closeMenu()">Portfólio</a>
+    <a href="#sobre" onclick="closeMenu()">Sobre o Ateliê</a>
+    <a href="#contato" onclick="closeMenu()">Contato</a>
+    <a href="https://wa.me/5517996492252?text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20fazer%20um%20pedido%20%F0%9F%8E%80" target="_blank" rel="noopener" onclick="closeMenu()">💬 Fazer pedido pelo WhatsApp</a>
   </div>
-</div>
+</header>
 
-<!-- MODAL ALTERAR SENHA -->
-<div id="chgPwdModal" class="modal-overlay hidden">
-  <div class="modal-box">
-    <h3>Alterar senha</h3>
-    <div class="form-group"><label>Nova senha</label><input id="pwdNova" type="password" placeholder="••••••" autocomplete="new-password"/></div>
-    <div class="form-group"><label>Confirmar nova senha</label><input id="pwdConfirm" type="password" placeholder="••••••" autocomplete="new-password"/></div>
-    <div id="pwdError" class="pwd-error"></div>
-    <button id="pwdSaveBtn" class="btn btn-primary" onclick="submitChangePwd()">Salvar nova senha</button>
-    <div style="height:8px"></div>
-    <button class="btn btn-outline btn-full" onclick="closeChgPwd()">Cancelar</button>
+<!-- HERO -->
+<section id="inicio" class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-deco" aria-hidden="true">
+    <span style="--fs:48px;--dur:9s;--del:0s;top:12%;left:8%">🎀</span>
+    <span style="--fs:32px;--dur:7s;--del:1.5s;top:22%;right:10%">🎀</span>
+    <span style="--fs:56px;--dur:11s;--del:3s;bottom:20%;left:14%">🎀</span>
+    <span style="--fs:28px;--dur:8s;--del:0.8s;bottom:30%;right:8%">🎀</span>
+    <span style="--fs:40px;--dur:10s;--del:2s;top:55%;left:4%">🎀</span>
+    <span style="--fs:24px;--dur:6s;--del:4s;top:8%;right:30%">🎀</span>
   </div>
-</div>
+  <div class="hero-content">
+    <div class="hero-tag">✨ Feito à mão com amor</div>
+    <h1>Laços que <em>encantam</em></h1>
+    <p class="hero-sub">Peças artesanais personalizadas para meninas e mulheres. Cada laço é único, criado com os melhores materiais e muito carinho.</p>
+    <div class="hero-btns">
+      <a href="https://wa.me/5517996492252?text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20fazer%20um%20pedido%20%F0%9F%8E%80" class="btn-hero" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.115 1.535 5.845L.057 23.5a.5.5 0 00.614.614l5.654-1.478A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.934 0-3.742-.522-5.293-1.432l-.38-.222-3.353.877.877-3.354-.222-.38A9.955 9.955 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        Fazer meu pedido
+      </a>
+      <a href="#portfolio" class="btn-hero-sec">Ver portfólio 🎀</a>
+    </div>
+  </div>
+  <div class="hero-scroll" aria-hidden="true">Role para ver</div>
+</section>
 
-<nav class="bottom-nav">
-  <button class="active" data-page="pgDash">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    Inicio
-  </button>
-  <button data-page="pgPedidos">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-    Pedidos
-  </button>
-  <button data-page="pgProdutos">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg>
-    Produtos
-  </button>
-  <button data-page="pgFinanceiro">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-    Financeiro
-  </button>
-  <button data-page="pgMais">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
-    Mais
-  </button>
-</nav>
+<!-- PORTFOLIO -->
+<section id="portfolio">
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-tag">Portfólio</div>
+      <h2 class="section-title">Nossos produtos</h2>
+      <p class="section-sub">Peças personalizadas feitas com os melhores materiais e muito carinho</p>
+    </div>
+    <div class="portfolio-grid">
+
+      <!-- Laços Infantis -->
+      <div class="port-card">
+        <div class="port-img" style="background:linear-gradient(145deg,#fce9f0,#fdf3f6)">
+          <div class="port-img-placeholder">
+            <div class="port-emoji">🎀</div>
+            <span class="port-img-label">Fotos em breve</span>
+          </div>
+        </div>
+        <div class="port-body">
+          <h3>Laços Infantis</h3>
+          <p>Laços delicados e coloridos para bebês e crianças. Ideais para looks do dia a dia e ocasiões especiais.</p>
+          <a href="https://wa.me/5517996492252?text=Ol%C3%A1!%20Tenho%20interesse%20em%20La%C3%A7os%20Infantis%20%F0%9F%8E%80%20Pode%20me%20ajudar?" target="_blank" rel="noopener" class="port-btn">💬 Fazer pedido</a>
+        </div>
+      </div>
+
+      <!-- Laços Femininos Adultos -->
+      <div class="port-card">
+        <div class="port-img" style="background:linear-gradient(145deg,#f5e8f0,#fdf3fb)">
+          <div class="port-img-placeholder">
+            <div class="port-emoji">🎀</div>
+            <span class="port-img-label">Fotos em breve</span>
+          </div>
+        </div>
+        <div class="port-body">
+          <h3>Laços Femininos</h3>
+          <p>Laços sofisticados para compor looks femininos adultos. Do casual ao elegante, temos o modelo ideal.</p>
+          <a href="https://wa.me/5517996492252?text=Ol%C3%A1!%20Tenho%20interesse%20em%20La%C3%A7os%20Femininos%20%F0%9F%8E%80%20Pode%20me%20ajudar?" target="_blank" rel="noopener" class="port-btn">💬 Fazer pedido</a>
+        </div>
+      </div>
+
+      <!-- Tiaras e Faixinhas -->
+      <div class="port-card">
+        <div class="port-img" style="background:linear-gradient(145deg,#f0eef8,#f8f5ff)">
+          <div class="port-img-placeholder">
+            <div class="port-emoji">👑</div>
+            <span class="port-img-label">Fotos em breve</span>
+          </div>
+        </div>
+        <div class="port-body">
+          <h3>Tiaras e Faixinhas</h3>
+          <p>Acessórios de cabelo lindos e confortáveis. Perfeitos para bebês e crianças em qualquer ocasião.</p>
+          <a href="https://wa.me/5517996492252?text=Ol%C3%A1!%20Tenho%20interesse%20em%20Tiaras%20e%20Faixinhas%20%F0%9F%91%91%20Pode%20me%20ajudar?" target="_blank" rel="noopener" class="port-btn">💬 Fazer pedido</a>
+        </div>
+      </div>
+
+      <!-- Kits Personalizados -->
+      <div class="port-card">
+        <div class="port-img" style="background:linear-gradient(145deg,#fef4e8,#fffaf3)">
+          <div class="port-img-placeholder">
+            <div class="port-emoji">🎁</div>
+            <span class="port-img-label">Fotos em breve</span>
+          </div>
+        </div>
+        <div class="port-body">
+          <h3>Kits Personalizados</h3>
+          <p>Conjuntos especiais para presentear. Personalize cores, modelos e quantidades para uma lembrança única.</p>
+          <a href="https://wa.me/5517996492252?text=Ol%C3%A1!%20Tenho%20interesse%20em%20Kits%20Personalizados%20%F0%9F%8E%81%20Pode%20me%20ajudar?" target="_blank" rel="noopener" class="port-btn">💬 Fazer pedido</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SOBRE -->
+<section id="sobre">
+  <div class="section-inner">
+    <div class="sobre-grid">
+      <div class="sobre-deco" aria-hidden="true">🎀</div>
+      <div class="sobre-text">
+        <div class="section-tag">Sobre nós</div>
+        <h2 class="section-title">O Ateliê do Laço</h2>
+        <p>O Ateliê do Laço nasceu da paixão pelo artesanato e pelo universo da moda infantil e feminina. Cada peça é produzida à mão com atenção a cada detalhe, utilizando tecidos e materiais criteriosamente selecionados para garantir qualidade e durabilidade.</p>
+        <p>Acreditamos que os acessórios certos transformam qualquer look — e é com essa missão que criamos laços únicos, pensados para valorizar a beleza e a personalidade de cada cliente, seja ela uma bebê em seu primeiro ensaio ou uma mulher que quer se sentir especial no dia a dia.</p>
+        <p>Trabalhamos sob encomenda com total personalização de cores, tamanhos e modelos. Será uma alegria criar algo especial para você!</p>
+        <div class="sobre-pills">
+          <span class="pill">✂️ Feito à mão</span>
+          <span class="pill">🎨 Personalizado</span>
+          <span class="pill">💎 Alta qualidade</span>
+          <span class="pill">📦 Entrega para todo o Brasil</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTATO -->
+<section id="contato">
+  <div class="section-inner">
+    <div class="contato-inner">
+      <div class="section-tag">Contato</div>
+      <h2 class="section-title">Vamos conversar?</h2>
+      <p class="section-sub">Tire suas dúvidas, faça seu pedido ou solicite um orçamento. Respondemos rapidinho!</p>
+      <div class="contato-btns">
+        <a href="https://wa.me/5517996492252?text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20fazer%20um%20pedido%20%F0%9F%8E%80" class="btn-wa-big" target="_blank" rel="noopener">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.115 1.535 5.845L.057 23.5a.5.5 0 00.614.614l5.654-1.478A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.934 0-3.742-.522-5.293-1.432l-.38-.222-3.353.877.877-3.354-.222-.38A9.955 9.955 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          Falar no WhatsApp
+        </a>
+        <a href="https://instagram.com/_ateliedolacoo" class="btn-ig" target="_blank" rel="noopener">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+          Seguir no Instagram
+        </a>
+      </div>
+      <p class="contato-info">
+        Ou envie uma mensagem para <a href="https://wa.me/5517996492252">(17) 99649-2252</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">🎀 Ateliê do Laço</div>
+    <div class="footer-links">
+      <a href="#portfolio">Portfólio</a>
+      <a href="#sobre">Sobre</a>
+      <a href="#contato">Contato</a>
+      <a href="https://instagram.com/_ateliedolacoo" target="_blank" rel="noopener">Instagram</a>
+    </div>
+    <span style="font-size:12px">© 2025 Ateliê do Laço. Todos os direitos reservados.</span>
+    <a href="/admin/" class="footer-admin">Área administrativa</a>
+  </div>
+</footer>
+
+<!-- FLOATING WHATSAPP -->
+<a href="https://wa.me/5517996492252?text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20fazer%20um%20pedido%20%F0%9F%8E%80" class="wa-float" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <div class="wa-tooltip">Falar no WhatsApp</div>
+  <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.115 1.535 5.845L.057 23.5a.5.5 0 00.614.614l5.654-1.478A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.934 0-3.742-.522-5.293-1.432l-.38-.222-3.353.877.877-3.354-.222-.38A9.955 9.955 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+</a>
 
 <script>
-/* ===== SUPABASE ===== */
-const SUPA_URL='https://pbpjawesltqtmhnqdvkv.supabase.co';
-const SUPA_KEY='sb_publishable_qCylfkwdvdMeVElPqDsDuQ_biaqDZwy';
-const sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
-
-const $=id=>document.getElementById(id);
-const BRL=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-const fmtDate=iso=>iso?new Date(iso+'T12:00:00').toLocaleDateString('pt-BR'):'-';
-const uid=()=>crypto.randomUUID();
-const MONTHS=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const STATUS={novo:{label:'Novo pedido',cls:'st-novo'},producao:{label:'Em producao',cls:'st-producao'},pronto:{label:'Pronto',cls:'st-pronto'},entregue:{label:'Entregue',cls:'st-entregue'},cancelado:{label:'Cancelado',cls:'st-cancelado'}};
-
-let orders=[],products=[],selMonth=new Date().getMonth(),selYear=new Date().getFullYear();
-let formItens=[];
-let currentUserEmail='';
-
-/* Loading */
-function setLoading(on){$('appLoading').style.display=on?'flex':'none';}
-
-/* DB mapping */
-function dbToOrder(r){
-  return {id:r.id,cliente:r.cliente,whatsapp:r.whatsapp||'',origem:r.origem||'Instagram',
-    status:r.status||'novo',itens:Array.isArray(r.itens)?r.itens:[],valor:r.valor||0,
-    custo:r.custo||0,despesas:r.despesas||0,desconto:r.desconto||0,
-    descontoTipo:r.desconto_tipo||'percent',pagamento:r.pagamento||'Pix',
-    pago:r.pago||'pendente',entrega:r.entrega||'',obs:r.obs||'',criado:r.criado};
+function toggleMenu(){
+  const m=document.getElementById('mobileMenu');
+  m.classList.toggle('open');
 }
-function dbToProduct(r){
-  return {id:r.id,nome:r.nome,categoria:r.categoria||'Laco infantil',
-    descricao:r.descricao||'',preco:r.preco||0,custo:r.custo||0,
-    estoque:r.estoque||0,estoqueMin:r.estoque_min||3,obs:r.obs||'',criado:r.criado};
+function closeMenu(){
+  document.getElementById('mobileMenu').classList.remove('open');
 }
-function orderToDb(o){
-  return {id:o.id,cliente:o.cliente,whatsapp:o.whatsapp||'',origem:o.origem||'Instagram',
-    status:o.status||'novo',itens:o.itens||[],valor:o.valor||0,
-    custo:o.custo||0,despesas:o.despesas||0,desconto:o.desconto||0,
-    desconto_tipo:o.descontoTipo||'percent',pagamento:o.pagamento||'Pix',
-    pago:o.pago||'pendente',entrega:o.entrega||null,obs:o.obs||'',
-    criado:o.criado||new Date().toISOString()};
-}
-function productToDb(p){
-  return {id:p.id,nome:p.nome,categoria:p.categoria||'Laco infantil',
-    descricao:p.descricao||'',preco:p.preco||0,custo:p.custo||0,
-    estoque:p.estoque||0,estoque_min:p.estoqueMin||3,obs:p.obs||'',
-    criado:p.criado||new Date().toISOString()};
-}
-
-/* Data ops */
-async function loadAll(){
-  setLoading(true);
-  const [ordRes,prodRes]=await Promise.all([
-    sb.from('orders').select('*').order('criado',{ascending:false}),
-    sb.from('products').select('*').order('nome')
-  ]);
-  if(ordRes.error) console.error('orders:',ordRes.error);
-  if(prodRes.error) console.error('products:',prodRes.error);
-  orders=(ordRes.data||[]).map(dbToOrder);
-  products=(prodRes.data||[]).map(dbToProduct);
-  setLoading(false);
-}
-async function saveOrder(o){
-  const {error}=await sb.from('orders').upsert(orderToDb(o));
-  if(error){alert('Erro ao salvar pedido: '+error.message);return false;}
-  return true;
-}
-async function deleteOrder(id){
-  const {error}=await sb.from('orders').delete().eq('id',id);
-  if(error){alert('Erro ao excluir pedido');return false;}
-  return true;
-}
-async function saveProduct(p){
-  const {error}=await sb.from('products').upsert(productToDb(p));
-  if(error){alert('Erro ao salvar produto: '+error.message);return false;}
-  return true;
-}
-async function deleteProduct(id){
-  const {error}=await sb.from('products').delete().eq('id',id);
-  if(error){alert('Erro ao excluir produto');return false;}
-  return true;
-}
-
-/* Auth */
-async function checkAuth(){
-  setLoading(true);
-  const {data:{session}}=await sb.auth.getSession();
-  setLoading(false);
-  if(session){
-    currentUserEmail=session.user.email;
-    showApp();
-    await loadAll();
-    renderDashboard();
-  } else {
-    showLogin();
-  }
-}
-function showApp(){
-  $('loginScreen').classList.add('hidden');
-  $('loginInfo').textContent='Logado como: '+currentUserEmail;
-}
-function showLogin(){
-  $('loginScreen').classList.remove('hidden');
-  setTimeout(()=>$('loginEmail')?.focus(),150);
-}
-async function doLogin(){
-  const email=($('loginEmail').value||'').trim();
-  const pass=$('loginPass').value||'';
-  if(!email||!pass){$('loginError').textContent='Preencha email e senha';return;}
-  const btn=$('loginBtn');
-  btn.disabled=true;btn.textContent='Entrando...';
-  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
-  btn.disabled=false;btn.textContent='Entrar';
-  if(error){$('loginError').textContent='Email ou senha incorretos';$('loginPass').value='';return;}
-  $('loginError').textContent='';
-  currentUserEmail=data.user.email;
-  showApp();
-  await loadAll();
-  renderDashboard();
-}
-window.doLogin=doLogin;
-async function doLogout(){
-  if(!confirm('Deseja sair do sistema?'))return;
-  await sb.auth.signOut();
-  orders=[];products=[];currentUserEmail='';
-  $('loginEmail').value='';$('loginPass').value='';
-  $('loginError').textContent='';
-  showLogin();
-}
-window.doLogout=doLogout;
-function openChgPwd(){
-  $('pwdNova').value='';$('pwdConfirm').value='';
-  $('pwdError').textContent='';
-  $('chgPwdModal').classList.remove('hidden');
-  setTimeout(()=>$('pwdNova').focus(),100);
-}
-window.openChgPwd=openChgPwd;
-function closeChgPwd(){$('chgPwdModal').classList.add('hidden');}
-window.closeChgPwd=closeChgPwd;
-async function submitChangePwd(){
-  const nova=$('pwdNova').value.trim();
-  const conf=$('pwdConfirm').value.trim();
-  const err=t=>{$('pwdError').textContent=t;};
-  if(nova.length<6){err('Nova senha deve ter pelo menos 6 caracteres');return;}
-  if(nova!==conf){err('As senhas nao conferem');return;}
-  const btn=$('pwdSaveBtn');
-  btn.disabled=true;btn.textContent='Salvando...';
-  const {error}=await sb.auth.updateUser({password:nova});
-  btn.disabled=false;btn.textContent='Salvar nova senha';
-  if(error){err('Erro: '+error.message);return;}
-  closeChgPwd();
-  alert('Senha alterada com sucesso!');
-}
-window.submitChangePwd=submitChangePwd;
-
-/* Navigation */
-function goTo(pageId){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  $(pageId).classList.add('active');
-  document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===pageId));
-  window.scrollTo(0,0);
-  if(pageId==='pgDash') renderDashboard();
-  if(pageId==='pgPedidos') renderOrders();
-  if(pageId==='pgProdutos') renderProducts();
-  if(pageId==='pgFinanceiro') renderFinanceiro();
-  if(pageId==='pgMais') renderClientes();
-}
-document.querySelectorAll('.bottom-nav button').forEach(b=>b.addEventListener('click',()=>goTo(b.dataset.page)));
-
-/* Order helpers */
-function orderSubtotal(o){
-  if(o.itens&&o.itens.length) return o.itens.reduce((s,i)=>s+Number(i.precoUnit||0)*Number(i.qtd||1),0);
-  return Number(o.valor||0);
-}
-function applyDesconto(sub,o){
-  const d=Number(o.desconto||0);
-  if(!d) return sub;
-  return o.descontoTipo==='percent'?sub*(1-Math.min(d,100)/100):Math.max(0,sub-d);
-}
-function orderTotal(o){return applyDesconto(orderSubtotal(o),o);}
-function itensSummary(o){
-  if(o.itens&&o.itens.length){
-    if(o.itens.length===1) return o.itens[0].qtd+'x '+o.itens[0].desc;
-    const tot=o.itens.reduce((s,i)=>s+Number(i.qtd||1),0);
-    return o.itens.length+' tipo(s) - '+tot+' pecas no total';
-  }
-  return o.descricao||'-';
-}
-function totalPecas(o){
-  if(o.itens&&o.itens.length) return o.itens.reduce((s,i)=>s+Number(i.qtd||1),0);
-  return Number(o.qtd||0);
-}
-
-/* Dashboard */
-function renderDashboard(){
-  const now=new Date(), mn=now.getMonth(), yr=now.getFullYear();
-  $('dashSubtitle').textContent=MONTHS[mn]+' de '+yr;
-  const thisMonth=orders.filter(o=>{const d=new Date(o.criado);return d.getMonth()===mn&&d.getFullYear()===yr&&o.status!=='cancelado';});
-  const ent=thisMonth.filter(o=>o.status==='entregue');
-  const fat=ent.reduce((s,o)=>s+orderTotal(o),0);
-  const cus=thisMonth.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
-  const luc=fat-cus;
-  const pend=orders.filter(o=>o.pago!=='pago'&&o.status!=='cancelado').length;
-  const estBx=products.filter(p=>Number(p.estoque||0)<=Number(p.estoqueMin||0)).length;
-  $('kpiGrid').innerHTML=
-    '<div class="kpi kpi-hl"><div class="label">Faturamento</div><div class="value">'+BRL(fat)+'</div><div class="sub">Entregues este mes</div></div>'+
-    '<div class="kpi"><div class="label">Lucro</div><div class="value '+(luc>=0?'profit-pos':'profit-neg')+'">'+BRL(luc)+'</div><div class="sub">Receita menos custos</div></div>'+
-    '<div class="kpi"><div class="label">Pedidos</div><div class="value">'+thisMonth.length+'</div><div class="sub">Este mes</div></div>'+
-    '<div class="kpi"><div class="label">Pgto pendente</div><div class="value" style="'+(pend?'color:var(--red)':'')+'">'+pend+'</div><div class="sub">'+(estBx?estBx+' prod. estoque baixo':'Estoque OK')+'</div></div>';
-  const counts={novo:0,producao:0,pronto:0,entregue:0};
-  orders.forEach(o=>{if(counts[o.status]!==undefined)counts[o.status]++;});
-  const maxC=Math.max(1,...Object.values(counts));
-  $('statusChart').innerHTML=Object.entries(counts).map(([k,v])=>'<div class="bar-row"><span class="bar-label">'+STATUS[k].label+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(v/maxC*100)+'%"></div></div><span class="bar-val">'+v+'</span></div>').join('')||'<div class="empty">Nenhum pedido ainda</div>';
-  const rec=ent.reduce((s,o)=>s+orderTotal(o),0), desp=thisMonth.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
-  $('monthResult').innerHTML=rec===0&&desp===0?'<div class="empty">Nenhum dado financeiro este mes</div>':
-    '<div class="totals-row"><span>Receita</span><span class="profit-pos">'+BRL(rec)+'</span></div>'+
-    '<div class="totals-row"><span>Custos + despesas</span><span class="profit-neg">'+BRL(desp)+'</span></div>'+
-    '<div class="totals-row" style="background:'+(rec-desp>=0?'#e7f4eb':'#fce9eb')+'"><span><strong>Resultado</strong></span><span class="'+(rec-desp>=0?'profit-pos':'profit-neg')+'">'+BRL(rec-desp)+'</span></div>';
-  const up=orders.filter(o=>o.status!=='entregue'&&o.status!=='cancelado'&&o.entrega).sort((a,b)=>a.entrega.localeCompare(b.entrega)).slice(0,5);
-  $('nextDeliveries').innerHTML=up.length?up.map(o=>'<div class="list-item" onclick="openOrderForm(\''+o.id+'\')"><div class="head"><strong>'+o.cliente+'</strong><span class="status '+STATUS[o.status].cls+'">'+STATUS[o.status].label+'</span></div><div class="small">'+itensSummary(o)+' - Entrega: '+fmtDate(o.entrega)+' - <span class="pago-'+o.pago+'">'+o.pago.toUpperCase()+'</span></div></div>').join(''):'<div class="empty">Nenhuma entrega pendente</div>';
-}
-
-/* Orders list */
-function renderOrders(){
-  const filter=document.querySelector('#orderTabs .active')?.dataset.filter||'all';
-  const search=($('orderSearch')?.value||'').toLowerCase();
-  let list=[...orders];
-  if(filter!=='all') list=list.filter(o=>o.status===filter);
-  if(search) list=list.filter(o=>{const t=(o.itens||[]).map(i=>i.desc).join(' ');return(o.cliente+' '+t+' '+o.origem).toLowerCase().includes(search);});
-  list.sort((a,b)=>new Date(b.criado)-new Date(a.criado));
-  $('ordersList').innerHTML=list.length?list.map(o=>{
-    const sub=orderSubtotal(o), tot=orderTotal(o), luc=tot-Number(o.custo||0)-Number(o.despesas||0);
-    const descTag=o.desconto&&Number(o.desconto)>0?' <span style="font-size:10px;background:#fff1de;color:#a06a19;padding:2px 7px;border-radius:999px;font-weight:700">DESC '+(o.descontoTipo==='percent'?o.desconto+'%':BRL(o.desconto))+'</span>':'';
-    return '<div class="list-item" onclick="openOrderForm(\''+o.id+'\')"><div class="head"><div><strong>'+o.cliente+'</strong><div class="small">'+fmtDate(o.entrega)+' - '+o.origem+'</div></div><span class="status '+(STATUS[o.status]?.cls||'st-novo')+'">'+(STATUS[o.status]?.label||o.status)+'</span></div><div class="small" style="margin-bottom:6px">'+itensSummary(o)+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span><strong>'+BRL(tot)+'</strong>'+descTag+' - <span class="pago-'+o.pago+'">'+o.pago.toUpperCase()+'</span></span><span class="small '+(luc>=0?'profit-pos':'profit-neg')+'">Lucro '+BRL(luc)+'</span></div></div>';
-  }).join(''):'<div class="empty">Nenhum pedido encontrado</div>';
-}
-document.querySelectorAll('#orderTabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#orderTabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderOrders();}));
-$('orderSearch')?.addEventListener('input',renderOrders);
-
-/* Itens form */
-function renderItensForm(){
-  const list=$('itensList'), footer=$('itensFooter');
-  if(!formItens.length){list.innerHTML='<div style="padding:12px 10px;font-size:13px;color:var(--muted);text-align:center">Nenhum item adicionado</div>';footer.style.display='none';return;}
-  list.innerHTML=formItens.map((it,i)=>'<div class="item-row"><input type="text" value="'+escH(it.desc)+'" placeholder="Descricao" oninput="updItem('+i+',\'desc\',this.value)"/><input type="number" value="'+it.qtd+'" min="1" oninput="updItem('+i+',\'qtd\',this.value)"/><input type="number" value="'+(it.precoUnit||'')+'" min="0" step="0.01" placeholder="0,00" oninput="updItem('+i+',\'precoUnit\',this.value)"/><button type="button" class="item-del" onclick="remItem('+i+')">&#215;</button></div>').join('');
-  recalcTotal(); footer.style.display='flex';
-}
-function escH(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function recalcTotal(){
-  const sub=formItens.reduce((s,i)=>s+Number(i.precoUnit||0)*Number(i.qtd||1),0);
-  $('itensTotal').textContent=BRL(sub);
-  $('itensFooter').style.display=formItens.length?'flex':'none';
-  const d=Number($('oDesconto')?.value||0);
-  const tipo=$('oDescontoTipo')?.value||'percent';
-  const final=d>0?(tipo==='percent'?sub*(1-Math.min(d,100)/100):Math.max(0,sub-d)):sub;
-  const vf=$('oValorFinal');
-  if(vf) vf.textContent=BRL(final)+(d>0?' (desc. '+(tipo==='percent'?d+'%':BRL(d))+')':'');
-}
-window.updItem=function(i,f,v){if(!formItens[i])return;formItens[i][f]=(f==='qtd'||f==='precoUnit')?Number(v)||0:v;recalcTotal();};
-window.remItem=function(i){formItens.splice(i,1);renderItensForm();};
-window.addItemRow=function(){formItens.push({id:uid(),desc:'',qtd:1,precoUnit:0});renderItensForm();setTimeout(()=>{const rows=$('itensList').querySelectorAll('.item-row');if(rows.length)rows[rows.length-1].querySelector('input').focus();},50);};
-window.addItemFromCatalog=function(){
-  const id=$('productPicker').value; if(!id){alert('Selecione um produto.');return;}
-  const p=products.find(x=>x.id===id); if(!p) return;
-  formItens.push({id:uid(),desc:p.nome+(p.descricao?' - '+p.descricao:''),qtd:1,precoUnit:Number(p.preco)||0});
-  const cur=Number($('oCusto').value||0); $('oCusto').value=(cur+Number(p.custo||0)).toFixed(2);
-  $('productPicker').value='';
-  renderItensForm();
-};
-
-/* Order form */
-function openOrderForm(id){
-  const picker=$('productPicker');
-  picker.innerHTML='<option value="">Selecionar produto</option>';
-  products.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.nome+' - '+BRL(p.preco);picker.appendChild(o);});
-  const isEdit=!!id;
-  $('orderFormTitle').textContent=isEdit?'Editar Pedido':'Novo Pedido';
-  $('orderSubmitBtn').textContent=isEdit?'Atualizar Pedido':'Salvar Pedido';
-  $('deleteOrderBtn').style.display=isEdit?'block':'none';
-  if(isEdit){
-    const o=orders.find(x=>x.id===id); if(!o) return;
-    $('orderId').value=o.id; $('oCliente').value=o.cliente||''; $('oWhats').value=o.whatsapp||'';
-    $('oOrigem').value=o.origem||'Instagram'; $('oStatus').value=o.status||'novo';
-    $('oEntrega').value=o.entrega||''; $('oCusto').value=o.custo||''; $('oDespesas').value=o.despesas||'';
-    $('oDesconto').value=o.desconto||''; $('oDescontoTipo').value=o.descontoTipo||'percent';
-    $('oPgto').value=o.pagamento||'Pix'; $('oPago').value=o.pago||'pendente'; $('oObs').value=o.obs||'';
-    formItens=o.itens&&o.itens.length?o.itens.map(i=>({...i,id:i.id||uid()})):
-      (o.descricao?[{id:uid(),desc:o.descricao,qtd:Number(o.qtd||1),precoUnit:Number(o.valor||0)/Math.max(1,Number(o.qtd||1))}]:[]);
-  } else {
-    $('orderForm').reset(); $('orderId').value=''; formItens=[];
-  }
-  renderItensForm();
-  goTo('pgOrderForm');
-}
-window.openOrderForm=openOrderForm;
-
-async function submitOrder(e){
-  e.preventDefault();
-  if(!formItens.length){alert('Adicione pelo menos um item ao pedido.');return;}
-  if(formItens.some(i=>!i.desc.trim())){alert('Preencha a descricao de todos os itens.');return;}
-  const id=$('orderId').value;
-  const btn=$('orderSubmitBtn'); btn.disabled=true; btn.textContent='Salvando...';
-  const data={cliente:$('oCliente').value.trim(),whatsapp:$('oWhats').value.trim(),origem:$('oOrigem').value,
-    itens:formItens.map(i=>({id:i.id,desc:i.desc.trim(),qtd:Number(i.qtd)||1,precoUnit:Number(i.precoUnit)||0})),
-    desconto:Number($('oDesconto').value||0),descontoTipo:$('oDescontoTipo').value,
-    custo:Number($('oCusto').value||0),despesas:Number($('oDespesas').value||0),
-    status:$('oStatus').value,entrega:$('oEntrega').value,pagamento:$('oPgto').value,
-    pago:$('oPago').value,obs:$('oObs').value.trim()};
-  const order=id?{...orders.find(o=>o.id===id),...data}:{id:uid(),...data,criado:new Date().toISOString()};
-  const ok=await saveOrder(order);
-  btn.disabled=false; btn.textContent=id?'Atualizar Pedido':'Salvar Pedido';
-  if(!ok) return;
-  await loadAll();
-  goTo('pgPedidos');
-}
-$('deleteOrderBtn').addEventListener('click',async()=>{
-  const id=$('orderId').value; if(!id) return;
-  if(!confirm('Excluir este pedido?')) return;
-  const ok=await deleteOrder(id); if(!ok) return;
-  await loadAll(); goTo('pgPedidos');
+// Hide header shadow when at top
+window.addEventListener('scroll',()=>{
+  document.querySelector('header').style.boxShadow=
+    window.scrollY>10?'0 2px 20px rgba(201,143,152,.12)':'none';
 });
-
-/* Products */
-function stockCls(p){const e=Number(p.estoque||0),m=Number(p.estoqueMin||0);return e===0?'st-zero':e<=m?'st-low':'st-ok';}
-function stockLbl(p){const e=Number(p.estoque||0),m=Number(p.estoqueMin||0);return e===0?'Sem estoque':e<=m?'Estoque baixo':'Em estoque';}
-function renderProducts(){
-  const s=($('prodSearch')?.value||'').toLowerCase();
-  let list=[...products]; if(s) list=list.filter(p=>(p.nome+' '+p.categoria).toLowerCase().includes(s));
-  list.sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
-  $('productsList').innerHTML=list.length?list.map(p=>{
-    const m=p.preco&&p.custo?Math.round(((p.preco-p.custo)/p.preco)*100):0;
-    return '<div class="product-card" onclick="openProdForm(\''+p.id+'\')"><div class="head"><div><strong>'+p.nome+'</strong><div class="small">'+p.categoria+'</div></div><span class="stock-badge '+stockCls(p)+'">'+p.estoque+' un - '+stockLbl(p)+'</span></div>'+(p.descricao?'<div class="small">'+p.descricao+'</div>':'')+'<div class="info-row"><div class="info-col"><span>Venda</span><strong>'+BRL(p.preco)+'</strong></div><div class="info-col"><span>Custo</span><strong>'+BRL(p.custo)+'</strong></div><div class="info-col"><span>Margem</span><strong class="'+(m>=0?'profit-pos':'profit-neg')+'">'+m+'%</strong></div></div></div>';
-  }).join(''):'<div class="empty">Nenhum produto cadastrado ainda</div>';
-}
-$('prodSearch')?.addEventListener('input',renderProducts);
-function openProdForm(id){
-  const isEdit=!!id;
-  $('prodFormTitle').textContent=isEdit?'Editar Produto':'Novo Produto';
-  $('prodSubmitBtn').textContent=isEdit?'Atualizar Produto':'Salvar Produto';
-  $('deleteProdBtn').style.display=isEdit?'block':'none';
-  if(isEdit){
-    const p=products.find(x=>x.id===id); if(!p) return;
-    $('prodId').value=p.id; $('pNome').value=p.nome||''; $('pCategoria').value=p.categoria||'Laco infantil';
-    $('pDesc').value=p.descricao||''; $('pPreco').value=p.preco||''; $('pCusto').value=p.custo||'';
-    $('pEstoque').value=p.estoque||0; $('pEstoqueMin').value=p.estoqueMin||3; $('pObs').value=p.obs||'';
-  } else {$('prodForm').reset();$('prodId').value='';$('pEstoque').value=0;$('pEstoqueMin').value=3;}
-  goTo('pgProdForm');
-}
-window.openProdForm=openProdForm;
-async function submitProd(e){
-  e.preventDefault();
-  const id=$('prodId').value;
-  const btn=$('prodSubmitBtn'); btn.disabled=true; btn.textContent='Salvando...';
-  const data={nome:$('pNome').value.trim(),categoria:$('pCategoria').value,descricao:$('pDesc').value.trim(),
-    preco:Number($('pPreco').value||0),custo:Number($('pCusto').value||0),
-    estoque:Number($('pEstoque').value||0),estoqueMin:Number($('pEstoqueMin').value||0),obs:$('pObs').value.trim()};
-  const product=id?{...products.find(p=>p.id===id),...data}:{id:uid(),...data,criado:new Date().toISOString()};
-  const ok=await saveProduct(product);
-  btn.disabled=false; btn.textContent=id?'Atualizar Produto':'Salvar Produto';
-  if(!ok) return;
-  await loadAll();
-  goTo('pgProdutos');
-}
-$('deleteProdBtn').addEventListener('click',async()=>{
-  const id=$('prodId').value; if(!id) return;
-  if(!confirm('Excluir este produto?')) return;
-  const ok=await deleteProduct(id); if(!ok) return;
-  await loadAll(); goTo('pgProdutos');
-});
-
-/* Financeiro */
-function changeMonth(d){selMonth+=d;if(selMonth>11){selMonth=0;selYear++;}if(selMonth<0){selMonth=11;selYear--;}renderFinanceiro();}
-window.changeMonth=changeMonth;
-let _finMoCache=[];
-function renderFinanceiro(){
-  $('monthLabel').textContent=MONTHS[selMonth]+' '+selYear;
-  const mo=orders.filter(o=>{const d=new Date(o.criado);return d.getMonth()===selMonth&&d.getFullYear()===selYear&&o.status!=='cancelado';});
-  const ent=mo.filter(o=>o.status==='entregue');
-  const rec=ent.reduce((s,o)=>s+orderTotal(o),0), cus=mo.reduce((s,o)=>s+Number(o.custo||0),0), des=mo.reduce((s,o)=>s+Number(o.despesas||0),0);
-  const luc=rec-cus-des, tk=ent.length?rec/ent.length:0, mg=rec?Math.round((luc/rec)*100):0, pend=mo.filter(o=>o.pago!=='pago').length;
-  $('finKpis').innerHTML=
-    '<div class="kpi kpi-hl"><div class="label">Receita</div><div class="value">'+BRL(rec)+'</div><div class="sub">'+ent.length+' entregues</div></div>'+
-    '<div class="kpi"><div class="label">Custos totais</div><div class="value">'+BRL(cus+des)+'</div><div class="sub">Material + despesas</div></div>'+
-    '<div class="kpi"><div class="label">Lucro</div><div class="value '+(luc>=0?'profit-pos':'profit-neg')+'">'+BRL(luc)+'</div><div class="sub">Margem: '+mg+'%</div></div>'+
-    '<div class="kpi"><div class="label">Ticket medio</div><div class="value">'+BRL(tk)+'</div><div class="sub">'+pend+' pgto(s) pendente(s)</div></div>';
-  $('finResultado').innerHTML=mo.length===0?'<div class="empty">Nenhum pedido neste mes</div>':
-    '<div class="totals-row"><span>Receita (entregues)</span><span class="profit-pos">'+BRL(rec)+'</span></div>'+
-    '<div class="totals-row"><span>Custo de material</span><span>'+BRL(cus)+'</span></div>'+
-    '<div class="totals-row"><span>Outras despesas</span><span>'+BRL(des)+'</span></div>'+
-    '<div class="totals-row" style="background:'+(luc>=0?'#e7f4eb':'#fce9eb')+'"><span><strong>Lucro liquido</strong></span><span class="'+(luc>=0?'profit-pos':'profit-neg')+'">'+BRL(luc)+'</span></div>';
-  const bySrc={};
-  mo.forEach(o=>{bySrc[o.origem]=(bySrc[o.origem]||0)+orderTotal(o);});
-  const maxS=Math.max(1,...Object.values(bySrc));
-  $('finSources').innerHTML=Object.keys(bySrc).length?Object.entries(bySrc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="bar-row"><span class="bar-label">'+k+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(v/maxS*100)+'%"></div></div><span class="bar-val">'+BRL(v)+'</span></div>').join(''):'<div class="empty">Sem dados de origem</div>';
-  _finMoCache=mo;
-  renderFinOrders();
-}
-function renderFinOrders(){
-  const s=($('finSearch')?.value||'').toLowerCase();
-  const list=s?_finMoCache.filter(o=>o.cliente.toLowerCase().includes(s)):_finMoCache;
-  $('finOrders').innerHTML=list.length?list.map(o=>{
-    const sub=orderSubtotal(o), t=orderTotal(o), l=t-Number(o.custo||0)-Number(o.despesas||0);
-    const itH=(o.itens||[]).map(i=>'<div class="small">&#183; '+i.qtd+'x '+i.desc+' = '+BRL(i.precoUnit*i.qtd)+'</div>').join('');
-    const descLine=o.desconto&&Number(o.desconto)>0?'<div class="small" style="color:var(--gold)">Desconto: '+(o.descontoTipo==='percent'?o.desconto+'%':BRL(o.desconto))+' (subtotal '+BRL(sub)+')</div>':'';
-    return '<div class="list-item"><div class="head"><strong>'+o.cliente+'</strong><span class="pago-'+o.pago+'">'+o.pago.toUpperCase()+'</span></div>'+itH+descLine+'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:8px;font-size:12px"><div><span class="small">Receita</span><div style="font-weight:700">'+BRL(t)+'</div></div><div><span class="small">Custos</span><div style="font-weight:700;color:var(--red)">'+BRL(Number(o.custo||0)+Number(o.despesas||0))+'</div></div><div><span class="small">Lucro</span><div class="'+(l>=0?'profit-pos':'profit-neg')+'" style="font-weight:700">'+BRL(l)+'</div></div></div></div>';
-  }).join(''):'<div class="empty">'+(s?'Nenhum resultado para "'+s+'"':'Nenhum pedido neste mes')+'</div>';
-}
-
-/* Clientes */
-function renderClientes(){
-  const s=($('clientSearch')?.value||'').toLowerCase();
-  const map={};
-  orders.forEach(o=>{const k=o.cliente.toLowerCase().trim();if(!map[k])map[k]={nome:o.cliente,whatsapp:o.whatsapp,origem:o.origem,pedidos:0,total:0,pecas:0,ultimo:o.criado};map[k].pedidos++;map[k].total+=orderTotal(o);map[k].pecas+=totalPecas(o);if(o.criado>map[k].ultimo){map[k].ultimo=o.criado;if(o.whatsapp)map[k].whatsapp=o.whatsapp;}});
-  let list=Object.values(map).sort((a,b)=>b.total-a.total);
-  if(s) list=list.filter(c=>c.nome.toLowerCase().includes(s));
-  $('clientsList').innerHTML=list.length?list.map(c=>'<div class="list-item"><div class="head"><strong>'+c.nome+'</strong><span class="small">'+c.pedidos+' pedido(s) - '+c.pecas+' pecas</span></div><div class="small">'+(c.whatsapp||'Sem WhatsApp')+' - '+c.origem+' - Ultimo: '+fmtDate(c.ultimo?.slice(0,10))+'</div><div class="totals-row" style="margin-top:8px"><span>Total gasto</span><span>'+BRL(c.total)+'</span></div></div>').join(''):'<div class="empty">Nenhum cliente ainda</div>';
-}
-$('clientSearch')?.addEventListener('input',renderClientes);
-
-/* Backup */
-function exportData(){
-  const b=new Blob([JSON.stringify({orders,products,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);
-  a.download='atelie-laco-'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();URL.revokeObjectURL(a.href);
-}
-window.exportData=exportData;
-async function importData(){
-  const file=$('importFile').files[0];
-  if(!file){alert('Selecione um arquivo');return;}
-  const r=new FileReader();
-  r.onload=async e=>{
-    try{
-      const d=JSON.parse(e.target.result);
-      const newOrders=Array.isArray(d.orders)?d.orders:[];
-      const newProducts=Array.isArray(d.products)?d.products:[];
-      if(!newOrders.length&&!newProducts.length){alert('Nenhum dado encontrado no arquivo');return;}
-      if(!confirm('Isso vai adicionar/sobrescrever '+newOrders.length+' pedidos e '+newProducts.length+' produtos. Continuar?'))return;
-      setLoading(true);
-      if(newOrders.length) await sb.from('orders').upsert(newOrders.map(orderToDb));
-      if(newProducts.length) await sb.from('products').upsert(newProducts.map(productToDb));
-      await loadAll();
-      setLoading(false);
-      alert('Backup importado com sucesso!');
-      renderDashboard();
-    }catch(err){alert('Arquivo invalido: '+err.message);}
-  };
-  r.readAsText(file);
-}
-window.importData=importData;
-async function resetAll(){
-  if(!confirm('Apagar TODOS os dados permanentemente? Esta acao nao pode ser desfeita.'))return;
-  if(!confirm('Tem certeza? Todos os pedidos e produtos serao apagados.'))return;
-  setLoading(true);
-  await Promise.all([
-    sb.from('orders').delete().neq('id','00000000-0000-0000-0000-000000000000'),
-    sb.from('products').delete().neq('id','00000000-0000-0000-0000-000000000000')
-  ]);
-  orders=[];products=[];
-  setLoading(false);
-  goTo('pgDash');
-}
-window.resetAll=resetAll;
-
-/* Enter keys on login */
-$('loginEmail')?.addEventListener('keydown',e=>{if(e.key==='Enter')$('loginPass').focus();});
-$('loginPass')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-
-/* Boot */
-checkAuth();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
 </html>
