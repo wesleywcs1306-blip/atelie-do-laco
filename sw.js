@@ -1,4 +1,4 @@
-const CACHE_NAME = 'atelie-laco-v1';
+const CACHE_NAME = 'atelie-laco-v2';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
