@@ -3,6 +3,7 @@
   "short_name": "Ateliê",
   "description": "Controle de pedidos e financeiro do Ateliê do Laço",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#fdf9f8",
   "theme_color": "#d8a8ae",
