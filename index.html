@@ -79,6 +79,13 @@ section{padding:80px 20px}
 .port-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(201,143,152,.2)}
 .port-img{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;position:relative;overflow:hidden}
 .port-img-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+.port-slides{position:absolute;inset:0;z-index:1}
+.port-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s ease}
+.port-photo.active{opacity:1}
+.port-card:hover .port-photo{transform:scale(1.03);transition:opacity .6s ease,transform .6s ease}
+.port-dots{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:2;pointer-events:auto}
+.port-dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.55);cursor:pointer;transition:background .2s,transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.port-dots span.active{background:#fff;transform:scale(1.2)}
 .port-emoji{font-size:52px;line-height:1}
 .port-img-label{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
 .port-body{padding:16px}
@@ -215,7 +222,9 @@ footer{background:var(--text);color:rgba(255,255,255,.6);padding:32px 20px}
 
       <!-- Laços Infantis -->
       <div class="port-card">
-        <div class="port-img" style="background:linear-gradient(145deg,#fce9f0,#fdf3f6)">
+        <div class="port-img" data-prefix="fotos/laco-infantil" data-alt="Laços infantis" style="background:linear-gradient(145deg,#fce9f0,#fdf3f6)">
+          <div class="port-slides"></div>
+          <div class="port-dots"></div>
           <div class="port-img-placeholder">
             <div class="port-emoji">🎀</div>
             <span class="port-img-label">Fotos em breve</span>
@@ -230,7 +239,9 @@ footer{background:var(--text);color:rgba(255,255,255,.6);padding:32px 20px}
 
       <!-- Laços Femininos Adultos -->
       <div class="port-card">
-        <div class="port-img" style="background:linear-gradient(145deg,#f5e8f0,#fdf3fb)">
+        <div class="port-img" data-prefix="fotos/laco-feminino" data-alt="Laços femininos" style="background:linear-gradient(145deg,#f5e8f0,#fdf3fb)">
+          <div class="port-slides"></div>
+          <div class="port-dots"></div>
           <div class="port-img-placeholder">
             <div class="port-emoji">🎀</div>
             <span class="port-img-label">Fotos em breve</span>
@@ -245,7 +256,9 @@ footer{background:var(--text);color:rgba(255,255,255,.6);padding:32px 20px}
 
       <!-- Tiaras e Faixinhas -->
       <div class="port-card">
-        <div class="port-img" style="background:linear-gradient(145deg,#f0eef8,#f8f5ff)">
+        <div class="port-img" data-prefix="fotos/tiara-faixinha" data-alt="Tiaras e faixinhas" style="background:linear-gradient(145deg,#f0eef8,#f8f5ff)">
+          <div class="port-slides"></div>
+          <div class="port-dots"></div>
           <div class="port-img-placeholder">
             <div class="port-emoji">👑</div>
             <span class="port-img-label">Fotos em breve</span>
@@ -260,7 +273,9 @@ footer{background:var(--text);color:rgba(255,255,255,.6);padding:32px 20px}
 
       <!-- Kits Personalizados -->
       <div class="port-card">
-        <div class="port-img" style="background:linear-gradient(145deg,#fef4e8,#fffaf3)">
+        <div class="port-img" data-prefix="fotos/kit-personalizado" data-alt="Kits personalizados" style="background:linear-gradient(145deg,#fef4e8,#fffaf3)">
+          <div class="port-slides"></div>
+          <div class="port-dots"></div>
           <div class="port-img-placeholder">
             <div class="port-emoji">🎁</div>
             <span class="port-img-label">Fotos em breve</span>
@@ -363,6 +378,118 @@ document.getElementById('footerYear').textContent=new Date().getFullYear();
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
+
+/* =========================================================
+   Carrossel de fotos do portfólio
+   - Tenta carregar <prefixo>-1.jpg, -2.jpg, ... (até 12)
+   - Se não existir, cai para <prefixo>.jpg (foto única)
+   - Se nada existir, mantém o placeholder (emoji + "Fotos em breve")
+   - Extensões suportadas: jpg, jpeg, png, webp
+   ========================================================= */
+(function initPortfolioSlides(){
+  const MAX_PHOTOS = 12;
+  const EXTS = ['jpg','jpeg','png','webp'];
+  const AUTOPLAY_MS = 3800;
+
+  function tryLoad(base){
+    // tenta cada extensão para um mesmo base path; retorna o URL que carregou ou null
+    return new Promise(resolve=>{
+      let idx = 0;
+      const tryNext = ()=>{
+        if(idx >= EXTS.length) return resolve(null);
+        const url = base + '.' + EXTS[idx++];
+        const img = new Image();
+        img.onload = ()=>resolve(url);
+        img.onerror = tryNext;
+        img.src = url;
+      };
+      tryNext();
+    });
+  }
+
+  async function collectPhotos(prefix){
+    // 1) tenta numeradas: prefix-1, prefix-2, ... até a primeira falhar
+    const found = [];
+    for(let i=1;i<=MAX_PHOTOS;i++){
+      const url = await tryLoad(prefix + '-' + i);
+      if(!url) break;
+      found.push(url);
+    }
+    if(found.length) return found;
+    // 2) fallback: foto única sem sufixo
+    const single = await tryLoad(prefix);
+    return single ? [single] : [];
+  }
+
+  function buildCarousel(el, urls, alt){
+    const slides = el.querySelector('.port-slides');
+    const dots = el.querySelector('.port-dots');
+    const placeholder = el.querySelector('.port-img-placeholder');
+    if(!slides || !dots) return;
+
+    // cria as imagens
+    urls.forEach((src,i)=>{
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = alt || '';
+      img.loading = 'lazy';
+      img.className = 'port-photo' + (i===0 ? ' active' : '');
+      slides.appendChild(img);
+    });
+
+    // com foto: esconde o placeholder
+    if(placeholder) placeholder.style.display = 'none';
+
+    // sem bolinhas / autoplay se só tem 1 foto
+    if(urls.length < 2) return;
+
+    // cria as bolinhas
+    urls.forEach((_,i)=>{
+      const d = document.createElement('span');
+      if(i===0) d.classList.add('active');
+      d.addEventListener('click', e=>{ e.stopPropagation(); show(i); resetTimer(); });
+      dots.appendChild(d);
+    });
+
+    const imgs = slides.querySelectorAll('.port-photo');
+    const dotEls = dots.querySelectorAll('span');
+    let cur = 0, timer = null;
+
+    function show(n){
+      imgs[cur].classList.remove('active');
+      dotEls[cur].classList.remove('active');
+      cur = (n + imgs.length) % imgs.length;
+      imgs[cur].classList.add('active');
+      dotEls[cur].classList.add('active');
+    }
+    function next(){ show(cur+1); }
+    function start(){ timer = setInterval(next, AUTOPLAY_MS); }
+    function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+    function resetTimer(){ stop(); start(); }
+
+    // pausa ao passar o mouse
+    el.addEventListener('mouseenter', stop);
+    el.addEventListener('mouseleave', start);
+
+    // começa só quando a seção ficar visível (economiza bateria)
+    if('IntersectionObserver' in window){
+      const io = new IntersectionObserver(entries=>{
+        entries.forEach(en=> en.isIntersecting ? start() : stop());
+      }, {threshold:0.25});
+      io.observe(el);
+    } else {
+      start();
+    }
+  }
+
+  document.querySelectorAll('.port-img[data-prefix]').forEach(async el=>{
+    const prefix = el.getAttribute('data-prefix');
+    const alt = el.getAttribute('data-alt') || '';
+    const urls = await collectPhotos(prefix);
+    if(urls.length) buildCarousel(el, urls, alt);
+    // sem fotos: placeholder permanece visível naturalmente
+  });
+})();
 </script>
 </body>
 </html>
