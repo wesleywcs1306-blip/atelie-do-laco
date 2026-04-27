@@ -1,4 +1,4 @@
-const CACHE_NAME = 'atelie-admin-v4';
+const CACHE_NAME = 'atelie-admin-v6';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
