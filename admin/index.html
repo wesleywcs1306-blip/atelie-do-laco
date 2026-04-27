@@ -145,6 +145,7 @@ textarea{resize:vertical}
   <section class="page" id="pgPedidos">
     <h2>Pedidos</h2>
     <p class="subtitle">Entrada, producao e entrega</p>
+    <button class="btn btn-primary btn-full" onclick="openOrderForm()" style="margin-bottom:14px">+ Novo Pedido</button>
     <div class="tab-bar" id="orderTabs">
       <button class="active" data-filter="all">Todos</button>
       <button data-filter="novo">Novos</button>
@@ -154,8 +155,6 @@ textarea{resize:vertical}
     </div>
     <div class="search-box"><input id="orderSearch" placeholder="Buscar cliente ou item..."/></div>
     <div id="ordersList"></div>
-    <div style="height:14px"></div>
-    <button class="btn btn-primary btn-full" onclick="openOrderForm()">+ Novo Pedido</button>
   </section>
 
   <!-- FORM PEDIDO -->
@@ -176,11 +175,11 @@ textarea{resize:vertical}
       </div>
       <div class="card" style="margin-bottom:14px">
         <h3>Itens do Pedido</h3>
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom:8px">
           <label>Adicionar do catalogo</label>
-          <div style="display:flex;gap:8px">
-            <select id="productPicker" style="flex:1"><option value="">Selecionar produto</option></select>
-            <button type="button" onclick="addItemFromCatalog()" style="flex-shrink:0;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--soft);font-weight:600;cursor:pointer;font-size:13px">+ Adicionar</button>
+          <div style="position:relative">
+            <input id="productSearchInput" type="text" placeholder="🔍 Digite para buscar produto..." autocomplete="off" oninput="onProductSearchInput()" onfocus="onProductSearchInput()" onblur="setTimeout(()=>{const r=document.getElementById('productSearchResults');if(r)r.style.display='none'},180)" onkeydown="onProductSearchKey(event)"/>
+            <div id="productSearchResults" style="position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:12px;max-height:280px;overflow-y:auto;z-index:50;display:none;box-shadow:0 8px 24px rgba(0,0,0,.12)"></div>
           </div>
         </div>
         <div class="itens-box" id="itensBox">
@@ -235,6 +234,8 @@ textarea{resize:vertical}
       </div>
       <button class="btn btn-primary" type="submit" id="orderSubmitBtn">Salvar Pedido</button>
       <div style="height:8px"></div>
+      <button class="btn btn-outline btn-full" type="button" id="orderSummaryBtn" style="display:none">📤 Gerar resumo para cliente</button>
+      <div style="height:8px"></div>
       <button class="btn btn-outline btn-full" type="button" id="deleteOrderBtn" style="display:none;color:var(--red)">Excluir este pedido</button>
       <div style="height:6px"></div>
       <button class="btn btn-outline btn-full" type="button" onclick="goTo('pgPedidos')">Cancelar</button>
@@ -245,13 +246,12 @@ textarea{resize:vertical}
   <section class="page" id="pgProdutos">
     <h2>Produtos</h2>
     <p class="subtitle">Catalogo e controle de estoque</p>
+    <button class="btn btn-primary btn-full" onclick="openProdForm()" style="margin-bottom:14px">+ Novo Produto</button>
     <div class="search-box"><input id="prodSearch" placeholder="Buscar produto..."/></div>
     <div class="tab-bar" id="prodCatTabs">
       <button class="active" data-cat="all">Todas</button>
     </div>
     <div id="productsList"></div>
-    <div style="height:14px"></div>
-    <button class="btn btn-primary btn-full" onclick="openProdForm()">+ Novo Produto</button>
   </section>
 
   <!-- FORM PRODUTO -->
@@ -360,6 +360,18 @@ textarea{resize:vertical}
     <button id="gdOk" class="btn btn-primary">OK</button>
     <div style="height:8px"></div>
     <button id="gdCancel" class="btn btn-outline btn-full" style="display:none">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL RESUMO PARA CLIENTE -->
+<div id="orderSummaryModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:440px;padding:18px 18px 16px">
+    <h3 style="margin:0 0 4px">Resumo para o cliente</h3>
+    <p class="small" style="margin:0 0 12px;color:var(--muted)">Visualize, copie ou envie no WhatsApp</p>
+    <div id="orderSummaryPreview" style="background:linear-gradient(160deg,#fff5f8 0%,#fff 60%);border:1px solid var(--line);border-radius:14px;padding:18px 16px;margin-bottom:14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"></div>
+    <button id="osCopy" class="btn btn-outline btn-full" type="button" style="margin-bottom:8px">📋 Copiar texto</button>
+    <button id="osWhats" class="btn btn-primary btn-full" type="button" style="margin-bottom:8px">💬 Enviar no WhatsApp</button>
+    <button id="osClose" class="btn btn-outline btn-full" type="button">Fechar</button>
   </div>
 </div>
 
@@ -695,12 +707,13 @@ function renderOrders(){
   $('ordersList').innerHTML=list.length?list.map(o=>{
     const sub=orderSubtotal(o), tot=orderTotal(o), luc=tot-Number(o.custo||0)-Number(o.despesas||0);
     const descTag=o.desconto&&Number(o.desconto)>0?' <span style="font-size:10px;background:#fff1de;color:#a06a19;padding:2px 7px;border-radius:999px;font-weight:700">DESC '+(o.descontoTipo==='percent'?Number(o.desconto)+'%':BRL(o.desconto))+'</span>':'';
-    const quickBtns=(o.status!=='entregue'&&o.status!=='cancelado')||o.pago!=='pago'?
-      '<div style="display:flex;gap:6px;margin-top:10px" onclick="event.stopPropagation()">'+
-      (o.status!=='entregue'&&o.status!=='cancelado'?'<button class="btn btn-soft" style="flex:1" onclick="quickMarkDelivered(\''+o.id+'\')">✓ Entregue</button>':'')+
-      (o.pago!=='pago'?'<button class="btn btn-soft" style="flex:1" onclick="quickMarkPaid(\''+o.id+'\')">💰 Pago</button>':'')+
+    const quickBtns=
+      '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap" onclick="event.stopPropagation()">'+
+      (o.status!=='entregue'&&o.status!=='cancelado'?'<button class="btn btn-soft" style="flex:1;min-width:90px" onclick="quickMarkDelivered(\''+o.id+'\')">✓ Entregue</button>':'')+
+      (o.pago!=='pago'?'<button class="btn btn-soft" style="flex:1;min-width:90px" onclick="quickMarkPaid(\''+o.id+'\')">💰 Pago</button>':'')+
+      '<button class="btn btn-soft" style="flex:0 0 auto;padding:7px 11px" onclick="openOrderSummary(\''+o.id+'\')" title="Gerar resumo para o cliente">📤</button>'+
       (o.whatsapp?'<button class="btn btn-soft" style="flex:0 0 auto;padding:7px 11px" onclick="waClient(\''+o.id+'\')" title="Abrir WhatsApp">💬</button>':'')+
-      '</div>':'';
+      '</div>';
     return '<div class="list-item" onclick="openOrderForm(\''+o.id+'\')"><div class="head"><div><strong>'+escH(o.cliente)+'</strong><div class="small">'+fmtDate(o.entrega)+' - '+escH(o.origem)+'</div></div><span class="status '+(STATUS[o.status]?.cls||'st-novo')+'">'+escH(STATUS[o.status]?.label||o.status)+'</span></div><div class="small" style="margin-bottom:6px">'+escH(itensSummary(o))+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span><strong>'+BRL(tot)+'</strong>'+descTag+' - <span class="pago-'+o.pago+'">'+escH(o.pago).toUpperCase()+'</span></span><span class="small '+(luc>=0?'profit-pos':'profit-neg')+'">Lucro '+BRL(luc)+'</span></div>'+quickBtns+'</div>';
   }).join(''):'<div class="empty">Nenhum pedido encontrado</div>';
 }
@@ -736,6 +749,103 @@ function waClient(id){
 }
 window.waClient=waClient;
 
+/* ========== Resumo do pedido para o cliente ========== */
+const STATUS_LBL_CLIENT={novo:'Novo pedido',producao:'Em producao',pronto:'Pronto para entrega',entregue:'Entregue',cancelado:'Cancelado'};
+const PAGO_LBL_CLIENT={pendente:'Pendente',parcial:'Parcial',pago:'Pago'};
+
+function buildOrderSummaryText(o){
+  const tot=orderTotal(o);
+  const sub=orderSubtotal(o);
+  const itens=(o.itens||[]).map(i=>{
+    const lin='• '+Number(i.qtd||1)+'x '+(i.desc||'');
+    const val=Number(i.precoUnit||0)*Number(i.qtd||1);
+    return lin+'\n   '+BRL(val);
+  }).join('\n');
+  const linhaSep='━━━━━━━━━━━━━━━';
+  let txt='🎀 *ATELIE DO LACO* 🎀\n'+linhaSep+'\n\n';
+  txt+='Ola '+(o.cliente||'')+'! 💕\n\nSegue o resumo do seu pedido:\n\n';
+  txt+='📋 *PEDIDO*\n'+(itens||'• (sem itens)')+'\n\n';
+  if(o.desconto&&Number(o.desconto)>0){
+    txt+='Subtotal: '+BRL(sub)+'\n';
+    const dStr=o.descontoTipo==='percent'?(Number(o.desconto)+'%'):BRL(o.desconto);
+    txt+='Desconto: '+dStr+'\n';
+  }
+  txt+=linhaSep+'\n💰 *TOTAL: '+BRL(tot)+'*\n'+linhaSep+'\n\n';
+  if(o.entrega) txt+='📅 Entrega prevista: '+fmtDate(o.entrega)+'\n';
+  if(o.pagamento) txt+='💳 Pagamento: '+o.pagamento+'\n';
+  if(o.pago) txt+='✅ Situacao: '+(PAGO_LBL_CLIENT[o.pago]||o.pago)+'\n';
+  if(o.obs) txt+='\n📝 Obs: '+o.obs+'\n';
+  txt+='\nQualquer duvida estou a disposicao! 🎀\n\n_Atenciosamente,_\n*Atelie do Laco*';
+  return txt;
+}
+
+function buildOrderSummaryHTML(o){
+  const tot=orderTotal(o);
+  const sub=orderSubtotal(o);
+  const itensHtml=(o.itens||[]).map(i=>{
+    const val=Number(i.precoUnit||0)*Number(i.qtd||1);
+    return '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed #f0d8de;font-size:13px"><span style="flex:1"><strong>'+Number(i.qtd||1)+'x</strong> '+escH(i.desc||'')+'</span><span style="color:#a04054;font-weight:700;white-space:nowrap">'+BRL(val)+'</span></div>';
+  }).join('');
+  let html='<div style="text-align:center;margin-bottom:14px"><div style="font-size:36px;line-height:1">🎀</div><div style="font-size:18px;font-weight:800;color:#a04054;letter-spacing:.5px;margin-top:4px">Ateliê do Laço</div><div style="font-size:11px;color:#999;letter-spacing:.1em;text-transform:uppercase">Resumo do pedido</div></div>';
+  html+='<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px"><div style="font-size:12px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Cliente</div><div style="font-weight:700;font-size:14px">'+escH(o.cliente||'-')+'</div></div>';
+  html+='<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px"><div style="font-size:12px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Itens</div>'+(itensHtml||'<div style="color:#999;font-size:13px">Sem itens</div>')+'</div>';
+  if(o.desconto&&Number(o.desconto)>0){
+    const dStr=o.descontoTipo==='percent'?(Number(o.desconto)+'%'):BRL(o.desconto);
+    html+='<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 4px;color:#666"><span>Subtotal</span><span>'+BRL(sub)+'</span></div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 4px;color:#a06a19"><span>Desconto</span><span>'+dStr+'</span></div>';
+  }
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;background:#a04054;color:#fff;border-radius:10px;padding:12px 14px;margin-top:8px;font-weight:800"><span style="font-size:13px;letter-spacing:.05em">TOTAL</span><span style="font-size:18px">'+BRL(tot)+'</span></div>';
+  let info='';
+  if(o.entrega) info+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 4px;color:#666"><span>📅 Entrega</span><span><strong>'+fmtDate(o.entrega)+'</strong></span></div>';
+  if(o.pagamento) info+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 4px;color:#666"><span>💳 Pagamento</span><span><strong>'+escH(o.pagamento)+'</strong></span></div>';
+  if(o.pago) info+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 4px;color:#666"><span>✅ Situacao</span><span><strong>'+escH(PAGO_LBL_CLIENT[o.pago]||o.pago)+'</strong></span></div>';
+  if(info) html+='<div style="margin-top:10px;background:#fff;border-radius:10px;padding:6px 8px">'+info+'</div>';
+  return html;
+}
+
+let _summaryOrder=null;
+function openOrderSummary(id){
+  const o=orders.find(x=>x.id===id); if(!o){toast('Pedido nao encontrado','error');return;}
+  _summaryOrder=o;
+  $('orderSummaryPreview').innerHTML=buildOrderSummaryHTML(o);
+  $('orderSummaryModal').classList.remove('hidden');
+}
+window.openOrderSummary=openOrderSummary;
+function closeOrderSummary(){ $('orderSummaryModal').classList.add('hidden'); _summaryOrder=null; }
+window.closeOrderSummary=closeOrderSummary;
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const btnClose=document.getElementById('osClose');
+  const btnCopy=document.getElementById('osCopy');
+  const btnWhats=document.getElementById('osWhats');
+  if(btnClose) btnClose.addEventListener('click',closeOrderSummary);
+  if(btnCopy) btnCopy.addEventListener('click',async()=>{
+    if(!_summaryOrder) return;
+    const txt=buildOrderSummaryText(_summaryOrder);
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(txt);
+      } else {
+        const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
+      }
+      toast('Resumo copiado!','success');
+    }catch(err){toast('Erro ao copiar','error');}
+  });
+  if(btnWhats) btnWhats.addEventListener('click',()=>{
+    if(!_summaryOrder) return;
+    const o=_summaryOrder;
+    const txt=buildOrderSummaryText(o);
+    const phone=String(o.whatsapp||'').replace(/\D/g,'');
+    if(phone){
+      const full=phone.length<=11?'55'+phone:phone;
+      window.open('https://wa.me/'+full+'?text='+encodeURIComponent(txt),'_blank');
+    } else {
+      // sem numero: abre WhatsApp Web vazio com a mensagem (usuario escolhe contato)
+      window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+    }
+  });
+});
+
 /* Itens form */
 function renderItensForm(){
   const list=$('itensList'), footer=$('itensFooter');
@@ -756,26 +866,83 @@ function recalcTotal(){
 window.updItem=function(i,f,v){if(!formItens[i])return;formItens[i][f]=(f==='qtd'||f==='precoUnit')?Number(v)||0:v;recalcTotal();};
 window.remItem=function(i){formItens.splice(i,1);renderItensForm();};
 window.addItemRow=function(){formItens.push({id:uid(),desc:'',qtd:1,precoUnit:0});renderItensForm();setTimeout(()=>{const rows=$('itensList').querySelectorAll('.item-row');if(rows.length)rows[rows.length-1].querySelector('input').focus();},50);};
-window.addItemFromCatalog=function(){
-  const id=$('productPicker').value; if(!id){toast('Selecione um produto','error');return;}
-  const p=products.find(x=>x.id===id); if(!p) return;
+window.addItemFromCatalog=function(id){
+  if(!id) return;
+  const p=products.find(x=>x.id===id); if(!p){toast('Produto nao encontrado','error');return;}
   formItens.push({id:uid(),desc:p.nome+(p.descricao?' - '+p.descricao:''),qtd:1,precoUnit:Number(p.preco)||0});
   const cur=Number($('oCusto').value||0); $('oCusto').value=(cur+Number(p.custo||0)).toFixed(2);
-  $('productPicker').value='';
+  const inp=$('productSearchInput'); if(inp){inp.value='';}
+  const res=$('productSearchResults'); if(res){res.style.display='none';res.innerHTML='';}
   renderItensForm();
+  toast('Produto adicionado','success');
+};
+
+let _prodSearchSel=-1;
+window.onProductSearchInput=function(){
+  const q=norm($('productSearchInput').value);
+  let list;
+  if(q){
+    list=products.filter(p=>norm((p.nome||'')+' '+(p.categoria||'')+' '+(p.descricao||'')).includes(q));
+  } else {
+    list=[...products];
+  }
+  list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR'));
+  list=list.slice(0,40);
+  _prodSearchSel=-1;
+  const res=$('productSearchResults');
+  if(!list.length){
+    res.innerHTML='<div style="padding:14px 12px;font-size:13px;color:var(--muted);text-align:center">Nenhum produto encontrado</div>';
+  } else {
+    res.innerHTML=list.map((p,i)=>'<div class="prod-search-item" data-id="'+escH(p.id)+'" data-idx="'+i+'" onmousedown="event.preventDefault();addItemFromCatalog(\''+escH(p.id)+'\')" style="padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13px"><div style="flex:1;min-width:0;overflow:hidden"><strong style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escH(p.nome)+'</strong>'+(p.categoria?'<span class="small" style="font-size:11px;color:var(--muted)">'+escH(p.categoria)+'</span>':'')+'</div><div style="flex-shrink:0;color:var(--rose-s);font-weight:700;white-space:nowrap">'+BRL(p.preco)+'</div></div>').join('');
+    // hover: clear active selection styling
+    res.querySelectorAll('.prod-search-item').forEach(el=>{
+      el.addEventListener('mouseenter',()=>{res.querySelectorAll('.prod-search-item').forEach(x=>x.style.background='');el.style.background='var(--soft)';_prodSearchSel=Number(el.dataset.idx);});
+    });
+  }
+  res.style.display='block';
+};
+window.onProductSearchKey=function(e){
+  const res=$('productSearchResults');
+  const items=res.querySelectorAll('.prod-search-item');
+  if(!items.length) return;
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    _prodSearchSel=Math.min(_prodSearchSel+1,items.length-1);
+    items.forEach(x=>x.style.background='');
+    items[_prodSearchSel].style.background='var(--soft)';
+    items[_prodSearchSel].scrollIntoView({block:'nearest'});
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    _prodSearchSel=Math.max(_prodSearchSel-1,0);
+    items.forEach(x=>x.style.background='');
+    items[_prodSearchSel].style.background='var(--soft)';
+    items[_prodSearchSel].scrollIntoView({block:'nearest'});
+  } else if(e.key==='Enter'){
+    e.preventDefault();
+    if(_prodSearchSel<0) _prodSearchSel=0;
+    const id=items[_prodSearchSel]?.dataset?.id;
+    if(id) addItemFromCatalog(id);
+  } else if(e.key==='Escape'){
+    res.style.display='none';
+  }
 };
 
 /* Order form */
 function openOrderForm(id){
-  const picker=$('productPicker');
-  picker.innerHTML='<option value="">Selecionar produto</option>';
-  products.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.nome+' - '+BRL(p.preco);picker.appendChild(o);});
+  // limpa busca de produto
+  const inp=$('productSearchInput'); if(inp) inp.value='';
+  const res=$('productSearchResults'); if(res){res.style.display='none';res.innerHTML='';}
   // Preenche datalist de clientes (autocomplete no campo "Nome")
   const dl=$('clientesList'); if(dl){dl.innerHTML='';const uniq=new Map();orders.forEach(o=>{const n=(o.cliente||'').trim();if(n&&!uniq.has(norm(n)))uniq.set(norm(n),n);});[...uniq.values()].sort((a,b)=>a.localeCompare(b,'pt-BR')).forEach(n=>{const op=document.createElement('option');op.value=n;dl.appendChild(op);});}
   const isEdit=!!id;
   $('orderFormTitle').textContent=isEdit?'Editar Pedido':'Novo Pedido';
   $('orderSubmitBtn').textContent=isEdit?'Atualizar Pedido':'Salvar Pedido';
   $('deleteOrderBtn').style.display=isEdit?'block':'none';
+  const sumBtn=$('orderSummaryBtn');
+  if(sumBtn){
+    sumBtn.style.display=isEdit?'block':'none';
+    sumBtn.onclick=isEdit?(()=>openOrderSummary(id)):null;
+  }
   if(isEdit){
     const o=orders.find(x=>x.id===id); if(!o) return;
     $('orderId').value=o.id; $('oCliente').value=o.cliente||''; $('oWhats').value=o.whatsapp||'';
