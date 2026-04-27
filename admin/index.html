@@ -9,6 +9,7 @@
   <link rel="manifest" href="manifest.json"/>
   <title>Ateliê do Laço — Admin</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
   <style>
 :root{
   --bg:#fdf9f8;--panel:#fff;--soft:#fff4f3;--line:#efdedd;
@@ -369,6 +370,7 @@ textarea{resize:vertical}
     <h3 style="margin:0 0 4px">Resumo para o cliente</h3>
     <p class="small" style="margin:0 0 12px;color:var(--muted)">Visualize, copie ou envie no WhatsApp</p>
     <div id="orderSummaryPreview" style="background:linear-gradient(160deg,#fff5f8 0%,#fff 60%);border:1px solid var(--line);border-radius:14px;padding:18px 16px;margin-bottom:14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"></div>
+    <button id="osPdf" class="btn btn-outline btn-full" type="button" style="margin-bottom:8px">📄 Baixar PDF</button>
     <button id="osCopy" class="btn btn-outline btn-full" type="button" style="margin-bottom:8px">📋 Copiar texto</button>
     <button id="osWhats" class="btn btn-primary btn-full" type="button" style="margin-bottom:8px">💬 Enviar no WhatsApp</button>
     <button id="osClose" class="btn btn-outline btn-full" type="button">Fechar</button>
@@ -753,6 +755,9 @@ window.waClient=waClient;
 const STATUS_LBL_CLIENT={novo:'Novo pedido',producao:'Em producao',pronto:'Pronto para entrega',entregue:'Entregue',cancelado:'Cancelado'};
 const PAGO_LBL_CLIENT={pendente:'Pendente',parcial:'Parcial',pago:'Pago'};
 
+// Logo embutido (SVG) para nao depender de arquivos externos no PDF/preview
+const LOGO_SVG='<svg viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg" style="width:220px;height:auto;display:block;margin:0 auto"><defs><linearGradient id="bowG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6b6c5"/><stop offset="1" stop-color="#c66c83"/></linearGradient></defs><g transform="translate(120,38)"><path d="M-2,-2 C-30,-22 -58,-12 -50,8 C-42,22 -16,18 -2,6 Z" fill="url(#bowG)" stroke="#8a3144" stroke-width="1.4"/><path d="M2,-2 C30,-22 58,-12 50,8 C42,22 16,18 2,6 Z" fill="url(#bowG)" stroke="#8a3144" stroke-width="1.4"/><path d="M-12,4 Q-16,22 -22,32" stroke="#a04054" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M12,4 Q16,22 22,32" stroke="#a04054" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="0" cy="3" rx="9" ry="10" fill="#8a3144"/><ellipse cx="-2" cy="0" rx="3" ry="3" fill="#f6b6c5" opacity=".55"/></g><text x="120" y="100" text-anchor="middle" font-family="\'Brush Script MT\',\'Lucida Handwriting\',\'Segoe Script\',cursive" font-size="34" fill="#a04054" font-style="italic" font-weight="400">Ateli&#234; do La&#231;o</text><text x="120" y="128" text-anchor="middle" font-family="Georgia,\'Times New Roman\',serif" font-size="11" fill="#c8839a" font-style="italic" letter-spacing="2">la&#231;os que encantam</text></svg>';
+
 function buildOrderSummaryText(o){
   const tot=orderTotal(o);
   const sub=orderSubtotal(o);
@@ -771,10 +776,7 @@ function buildOrderSummaryText(o){
     txt+='Desconto: '+dStr+'\n';
   }
   txt+=linhaSep+'\n💰 *TOTAL: '+BRL(tot)+'*\n'+linhaSep+'\n\n';
-  if(o.entrega) txt+='📅 Entrega prevista: '+fmtDate(o.entrega)+'\n';
-  if(o.pagamento) txt+='💳 Pagamento: '+o.pagamento+'\n';
-  if(o.pago) txt+='✅ Situacao: '+(PAGO_LBL_CLIENT[o.pago]||o.pago)+'\n';
-  if(o.obs) txt+='\n📝 Obs: '+o.obs+'\n';
+  if(o.obs) txt+='📝 Obs: '+o.obs+'\n';
   txt+='\nQualquer duvida estou a disposicao! 🎀\n\n_Atenciosamente,_\n*Atelie do Laco*';
   return txt;
 }
@@ -786,7 +788,7 @@ function buildOrderSummaryHTML(o){
     const val=Number(i.precoUnit||0)*Number(i.qtd||1);
     return '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed #f0d8de;font-size:13px"><span style="flex:1"><strong>'+Number(i.qtd||1)+'x</strong> '+escH(i.desc||'')+'</span><span style="color:#a04054;font-weight:700;white-space:nowrap">'+BRL(val)+'</span></div>';
   }).join('');
-  let html='<div style="text-align:center;margin-bottom:14px"><div style="font-size:36px;line-height:1">🎀</div><div style="font-size:18px;font-weight:800;color:#a04054;letter-spacing:.5px;margin-top:4px">Ateliê do Laço</div><div style="font-size:11px;color:#999;letter-spacing:.1em;text-transform:uppercase">Resumo do pedido</div></div>';
+  let html='<div style="text-align:center;margin-bottom:14px">'+LOGO_SVG+'<div style="font-size:11px;color:#999;letter-spacing:.1em;text-transform:uppercase;margin-top:4px">Resumo do pedido</div></div>';
   html+='<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px"><div style="font-size:12px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Cliente</div><div style="font-weight:700;font-size:14px">'+escH(o.cliente||'-')+'</div></div>';
   html+='<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px"><div style="font-size:12px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Itens</div>'+(itensHtml||'<div style="color:#999;font-size:13px">Sem itens</div>')+'</div>';
   if(o.desconto&&Number(o.desconto)>0){
@@ -795,11 +797,7 @@ function buildOrderSummaryHTML(o){
     html+='<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 4px;color:#a06a19"><span>Desconto</span><span>'+dStr+'</span></div>';
   }
   html+='<div style="display:flex;justify-content:space-between;align-items:center;background:#a04054;color:#fff;border-radius:10px;padding:12px 14px;margin-top:8px;font-weight:800"><span style="font-size:13px;letter-spacing:.05em">TOTAL</span><span style="font-size:18px">'+BRL(tot)+'</span></div>';
-  let info='';
-  if(o.entrega) info+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 4px;color:#666"><span>📅 Entrega</span><span><strong>'+fmtDate(o.entrega)+'</strong></span></div>';
-  if(o.pagamento) info+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 4px;color:#666"><span>💳 Pagamento</span><span><strong>'+escH(o.pagamento)+'</strong></span></div>';
-  if(o.pago) info+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 4px;color:#666"><span>✅ Situacao</span><span><strong>'+escH(PAGO_LBL_CLIENT[o.pago]||o.pago)+'</strong></span></div>';
-  if(info) html+='<div style="margin-top:10px;background:#fff;border-radius:10px;padding:6px 8px">'+info+'</div>';
+  if(o.obs) html+='<div style="margin-top:10px;background:#fff;border-radius:10px;padding:10px 12px;font-size:12px;color:#666"><strong style="color:#a04054">📝 Obs:</strong> '+escH(o.obs)+'</div>';
   return html;
 }
 
@@ -814,10 +812,55 @@ window.openOrderSummary=openOrderSummary;
 function closeOrderSummary(){ $('orderSummaryModal').classList.add('hidden'); _summaryOrder=null; }
 window.closeOrderSummary=closeOrderSummary;
 
+async function generateOrderPdf(o){
+  if(!o) return;
+  // Garante que o html2pdf carregou (carregamento defer pode ainda nao ter completado)
+  if(typeof html2pdf==='undefined'){
+    toast('Aguarde, biblioteca de PDF carregando...','info');
+    // tenta carregar dinamicamente como fallback
+    await new Promise((resolve,reject)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      s.onload=resolve; s.onerror=reject;
+      document.head.appendChild(s);
+    }).catch(()=>{});
+    if(typeof html2pdf==='undefined'){toast('Falha ao carregar gerador de PDF (sem internet?)','error');return;}
+  }
+  // monta um container offscreen com layout adequado para A4
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;left:-99999px;top:0;width:560px;background:linear-gradient(160deg,#fff5f8 0%,#fff 60%);padding:32px 28px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#3d2a2e';
+  wrap.innerHTML=buildOrderSummaryHTML(o)+
+    '<div style="margin-top:22px;padding-top:14px;border-top:1px dashed #f0d8de;text-align:center;font-size:11px;color:#999;line-height:1.6">'+
+      'Documento gerado em '+new Date().toLocaleDateString('pt-BR')+' as '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'<br>'+
+      '<strong style="color:#a04054">Atelie do Laco</strong> &middot; Pecas artesanais feitas a mao 🎀'+
+    '</div>';
+  document.body.appendChild(wrap);
+  try{
+    const safe=String(o.cliente||'cliente').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase().substring(0,40)||'cliente';
+    const stamp=new Date().toISOString().substring(0,10);
+    const filename='Pedido-'+safe+'-'+stamp+'.pdf';
+    await html2pdf().from(wrap).set({
+      margin:[10,10,10,10],
+      filename:filename,
+      image:{type:'jpeg',quality:0.95},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+    }).save();
+    toast('PDF gerado!','success');
+  }catch(err){
+    console.error('Erro PDF:',err);
+    toast('Erro ao gerar PDF','error');
+  }finally{
+    if(wrap.parentNode) wrap.parentNode.removeChild(wrap);
+  }
+}
+window.generateOrderPdf=generateOrderPdf;
+
 document.addEventListener('DOMContentLoaded',()=>{
   const btnClose=document.getElementById('osClose');
   const btnCopy=document.getElementById('osCopy');
   const btnWhats=document.getElementById('osWhats');
+  const btnPdf=document.getElementById('osPdf');
   if(btnClose) btnClose.addEventListener('click',closeOrderSummary);
   if(btnCopy) btnCopy.addEventListener('click',async()=>{
     if(!_summaryOrder) return;
@@ -843,6 +886,12 @@ document.addEventListener('DOMContentLoaded',()=>{
       // sem numero: abre WhatsApp Web vazio com a mensagem (usuario escolhe contato)
       window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
     }
+  });
+  if(btnPdf) btnPdf.addEventListener('click',async()=>{
+    if(!_summaryOrder) return;
+    btnPdf.disabled=true; const lbl=btnPdf.textContent; btnPdf.textContent='Gerando PDF...';
+    try{ await generateOrderPdf(_summaryOrder); }
+    finally{ btnPdf.disabled=false; btnPdf.textContent=lbl; }
   });
 });
 
