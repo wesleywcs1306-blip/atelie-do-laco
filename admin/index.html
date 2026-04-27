@@ -370,9 +370,10 @@ textarea{resize:vertical}
     <h3 style="margin:0 0 4px">Resumo para o cliente</h3>
     <p class="small" style="margin:0 0 12px;color:var(--muted)">Visualize, copie ou envie no WhatsApp</p>
     <div id="orderSummaryPreview" style="background:linear-gradient(160deg,#fff5f8 0%,#fff 60%);border:1px solid var(--line);border-radius:14px;padding:18px 16px;margin-bottom:14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"></div>
+    <button id="osPdfWhats" class="btn btn-primary btn-full" type="button" style="margin-bottom:8px">📤 Enviar PDF no WhatsApp</button>
     <button id="osPdf" class="btn btn-outline btn-full" type="button" style="margin-bottom:8px">📄 Baixar PDF</button>
+    <button id="osWhats" class="btn btn-outline btn-full" type="button" style="margin-bottom:8px">💬 Enviar texto no WhatsApp</button>
     <button id="osCopy" class="btn btn-outline btn-full" type="button" style="margin-bottom:8px">📋 Copiar texto</button>
-    <button id="osWhats" class="btn btn-primary btn-full" type="button" style="margin-bottom:8px">💬 Enviar no WhatsApp</button>
     <button id="osClose" class="btn btn-outline btn-full" type="button">Fechar</button>
   </div>
 </div>
@@ -755,8 +756,12 @@ window.waClient=waClient;
 const STATUS_LBL_CLIENT={novo:'Novo pedido',producao:'Em producao',pronto:'Pronto para entrega',entregue:'Entregue',cancelado:'Cancelado'};
 const PAGO_LBL_CLIENT={pendente:'Pendente',parcial:'Parcial',pago:'Pago'};
 
-// Logo embutido (SVG) para nao depender de arquivos externos no PDF/preview
-const LOGO_SVG='<svg viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg" style="width:220px;height:auto;display:block;margin:0 auto"><defs><linearGradient id="bowG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6b6c5"/><stop offset="1" stop-color="#c66c83"/></linearGradient></defs><g transform="translate(120,38)"><path d="M-2,-2 C-30,-22 -58,-12 -50,8 C-42,22 -16,18 -2,6 Z" fill="url(#bowG)" stroke="#8a3144" stroke-width="1.4"/><path d="M2,-2 C30,-22 58,-12 50,8 C42,22 16,18 2,6 Z" fill="url(#bowG)" stroke="#8a3144" stroke-width="1.4"/><path d="M-12,4 Q-16,22 -22,32" stroke="#a04054" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M12,4 Q16,22 22,32" stroke="#a04054" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="0" cy="3" rx="9" ry="10" fill="#8a3144"/><ellipse cx="-2" cy="0" rx="3" ry="3" fill="#f6b6c5" opacity=".55"/></g><text x="120" y="100" text-anchor="middle" font-family="\'Brush Script MT\',\'Lucida Handwriting\',\'Segoe Script\',cursive" font-size="34" fill="#a04054" font-style="italic" font-weight="400">Ateli&#234; do La&#231;o</text><text x="120" y="128" text-anchor="middle" font-family="Georgia,\'Times New Roman\',serif" font-size="11" fill="#c8839a" font-style="italic" letter-spacing="2">la&#231;os que encantam</text></svg>';
+// Logo em HTML/CSS (html2canvas nao renderiza SVG com gradientes corretamente)
+const LOGO_HTML='<div style="text-align:center;padding:4px 0 8px">'
+  +'<div style="font-size:42px;line-height:1">🎀</div>'
+  +'<div style="font-family:\'Brush Script MT\',\'Lucida Handwriting\',\'Segoe Script\',cursive;font-size:36px;color:#a04054;font-style:italic;line-height:1;margin-top:6px;font-weight:400">Ateli&ecirc; do La&ccedil;o</div>'
+  +'<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:11px;color:#c8839a;font-style:italic;letter-spacing:3px;margin-top:6px;text-transform:lowercase">la&ccedil;os que encantam</div>'
+  +'</div>';
 
 function buildOrderSummaryText(o){
   const tot=orderTotal(o);
@@ -788,7 +793,7 @@ function buildOrderSummaryHTML(o){
     const val=Number(i.precoUnit||0)*Number(i.qtd||1);
     return '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed #f0d8de;font-size:13px"><span style="flex:1"><strong>'+Number(i.qtd||1)+'x</strong> '+escH(i.desc||'')+'</span><span style="color:#a04054;font-weight:700;white-space:nowrap">'+BRL(val)+'</span></div>';
   }).join('');
-  let html='<div style="text-align:center;margin-bottom:14px">'+LOGO_SVG+'<div style="font-size:11px;color:#999;letter-spacing:.1em;text-transform:uppercase;margin-top:4px">Resumo do pedido</div></div>';
+  let html='<div style="text-align:center;margin-bottom:14px">'+LOGO_HTML+'<div style="font-size:11px;color:#999;letter-spacing:.1em;text-transform:uppercase;margin-top:4px">Resumo do pedido</div></div>';
   html+='<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px"><div style="font-size:12px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Cliente</div><div style="font-weight:700;font-size:14px">'+escH(o.cliente||'-')+'</div></div>';
   html+='<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px"><div style="font-size:12px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Itens</div>'+(itensHtml||'<div style="color:#999;font-size:13px">Sem itens</div>')+'</div>';
   if(o.desconto&&Number(o.desconto)>0){
@@ -812,49 +817,112 @@ window.openOrderSummary=openOrderSummary;
 function closeOrderSummary(){ $('orderSummaryModal').classList.add('hidden'); _summaryOrder=null; }
 window.closeOrderSummary=closeOrderSummary;
 
-async function generateOrderPdf(o){
-  if(!o) return;
-  // Garante que o html2pdf carregou (carregamento defer pode ainda nao ter completado)
-  if(typeof html2pdf==='undefined'){
-    toast('Aguarde, biblioteca de PDF carregando...','info');
-    // tenta carregar dinamicamente como fallback
-    await new Promise((resolve,reject)=>{
-      const s=document.createElement('script');
-      s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-      s.onload=resolve; s.onerror=reject;
-      document.head.appendChild(s);
-    }).catch(()=>{});
-    if(typeof html2pdf==='undefined'){toast('Falha ao carregar gerador de PDF (sem internet?)','error');return;}
-  }
-  // monta um container offscreen com layout adequado para A4
+async function ensureHtml2Pdf(){
+  if(typeof html2pdf!=='undefined') return true;
+  toast('Aguarde, biblioteca de PDF carregando...','info');
+  await new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    s.onload=resolve; s.onerror=reject;
+    document.head.appendChild(s);
+  }).catch(()=>{});
+  if(typeof html2pdf==='undefined'){toast('Falha ao carregar gerador de PDF (sem internet?)','error');return false;}
+  return true;
+}
+
+function _orderPdfFilename(o){
+  const safe=String(o.cliente||'cliente').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase().substring(0,40)||'cliente';
+  const stamp=new Date().toISOString().substring(0,10);
+  return 'Pedido-'+safe+'-'+stamp+'.pdf';
+}
+
+// monta o container do PDF e roda html2pdf retornando os bytes
+async function _renderOrderPdf(o, mode){
+  // container precisa ESTAR VISIVEL no DOM para o html2canvas conseguir medir/desenhar
+  // posicionamos top:-99999px (fora da viewport) mas SEM display:none/visibility:hidden
   const wrap=document.createElement('div');
-  wrap.style.cssText='position:fixed;left:-99999px;top:0;width:560px;background:linear-gradient(160deg,#fff5f8 0%,#fff 60%);padding:32px 28px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#3d2a2e';
+  wrap.style.cssText='position:absolute;left:0;top:-99999px;width:560px;background:#ffffff;padding:32px 28px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#3d2a2e;box-sizing:border-box';
   wrap.innerHTML=buildOrderSummaryHTML(o)+
     '<div style="margin-top:22px;padding-top:14px;border-top:1px dashed #f0d8de;text-align:center;font-size:11px;color:#999;line-height:1.6">'+
       'Documento gerado em '+new Date().toLocaleDateString('pt-BR')+' as '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'<br>'+
       '<strong style="color:#a04054">Atelie do Laco</strong> &middot; Pecas artesanais feitas a mao 🎀'+
     '</div>';
   document.body.appendChild(wrap);
+  // pequena espera para o navegador calcular layout das fontes cursivas
+  await new Promise(r=>setTimeout(r,80));
   try{
-    const safe=String(o.cliente||'cliente').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase().substring(0,40)||'cliente';
-    const stamp=new Date().toISOString().substring(0,10);
-    const filename='Pedido-'+safe+'-'+stamp+'.pdf';
-    await html2pdf().from(wrap).set({
+    const filename=_orderPdfFilename(o);
+    const worker=html2pdf().from(wrap).set({
       margin:[10,10,10,10],
       filename:filename,
       image:{type:'jpeg',quality:0.95},
-      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,windowWidth:wrap.offsetWidth},
       jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-    }).save();
+    });
+    if(mode==='blob'){
+      const blob=await worker.outputPdf('blob');
+      return {blob, filename};
+    } else {
+      await worker.save();
+      return {filename};
+    }
+  } finally {
+    if(wrap.parentNode) wrap.parentNode.removeChild(wrap);
+  }
+}
+
+async function generateOrderPdf(o){
+  if(!o) return;
+  if(!(await ensureHtml2Pdf())) return;
+  try{
+    await _renderOrderPdf(o,'save');
     toast('PDF gerado!','success');
   }catch(err){
     console.error('Erro PDF:',err);
     toast('Erro ao gerar PDF','error');
-  }finally{
-    if(wrap.parentNode) wrap.parentNode.removeChild(wrap);
   }
 }
 window.generateOrderPdf=generateOrderPdf;
+
+async function shareOrderPdfWhatsApp(o){
+  if(!o) return;
+  if(!(await ensureHtml2Pdf())) return;
+  let blob, filename;
+  try{
+    const res=await _renderOrderPdf(o,'blob');
+    blob=res.blob; filename=res.filename;
+  }catch(err){
+    console.error('Erro PDF:',err); toast('Erro ao gerar PDF','error'); return;
+  }
+  const file=new File([blob], filename, {type:'application/pdf'});
+  // Tenta Web Share API com arquivo (funciona em mobile - Android/iOS)
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({
+        files:[file],
+        title:'Resumo do pedido',
+        text:'🎀 Atelie do Laco — resumo do seu pedido em anexo'
+      });
+      toast('Compartilhamento aberto','success');
+      return;
+    }catch(err){
+      if(err.name==='AbortError') return; // usuario cancelou
+      console.warn('share() falhou, caindo para fallback:',err);
+    }
+  }
+  // Fallback (desktop ou navegador sem suporte): baixa o PDF e abre WhatsApp Web
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  const phone=String(o.whatsapp||'').replace(/\D/g,'');
+  const msg='🎀 *Atelie do Laco*\nSegue em anexo o resumo do seu pedido em PDF 💕';
+  const wa=phone ? 'https://wa.me/'+(phone.length<=11?'55'+phone:phone)+'?text='+encodeURIComponent(msg) : 'https://wa.me/?text='+encodeURIComponent(msg);
+  setTimeout(()=>window.open(wa,'_blank'), 600);
+  toast('PDF baixado — anexe no WhatsApp que abriu','info');
+}
+window.shareOrderPdfWhatsApp=shareOrderPdfWhatsApp;
 
 document.addEventListener('DOMContentLoaded',()=>{
   const btnClose=document.getElementById('osClose');
@@ -892,6 +960,13 @@ document.addEventListener('DOMContentLoaded',()=>{
     btnPdf.disabled=true; const lbl=btnPdf.textContent; btnPdf.textContent='Gerando PDF...';
     try{ await generateOrderPdf(_summaryOrder); }
     finally{ btnPdf.disabled=false; btnPdf.textContent=lbl; }
+  });
+  const btnPdfWhats=document.getElementById('osPdfWhats');
+  if(btnPdfWhats) btnPdfWhats.addEventListener('click',async()=>{
+    if(!_summaryOrder) return;
+    btnPdfWhats.disabled=true; const lbl=btnPdfWhats.textContent; btnPdfWhats.textContent='Preparando PDF...';
+    try{ await shareOrderPdfWhatsApp(_summaryOrder); }
+    finally{ btnPdfWhats.disabled=false; btnPdfWhats.textContent=lbl; }
   });
 });
 
