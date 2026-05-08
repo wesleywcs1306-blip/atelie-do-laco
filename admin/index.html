@@ -87,7 +87,8 @@ textarea{resize:vertical}
 .pago-pendente{color:var(--red);font-weight:700;font-size:11px}
 .itens-box{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:12px}
 .itens-header{display:grid;grid-template-columns:1fr 58px 90px 32px;gap:4px;padding:8px 10px;background:var(--soft);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
-.item-row{display:grid;grid-template-columns:1fr 58px 90px 32px;gap:4px;padding:6px 8px;border-top:1px solid var(--line);align-items:center}
+.item-row{display:grid;grid-template-columns:1fr 48px 78px 78px 28px;gap:4px;padding:6px 8px;border-top:1px solid var(--line);align-items:center}
+.itens-header{display:grid;grid-template-columns:1fr 48px 78px 78px 28px;gap:4px;padding:8px 8px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600;background:var(--soft)}
 .item-row input{padding:8px 8px;border-radius:10px;font-size:14px;border:1px solid var(--line)}
 .item-row input[type=number]{text-align:right}
 .item-del{border:0;background:none;color:var(--red);font-size:20px;cursor:pointer;padding:0;line-height:1;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0}
@@ -185,7 +186,7 @@ textarea{resize:vertical}
         </div>
         <div class="itens-box" id="itensBox">
           <div class="itens-header">
-            <span>Descricao</span><span style="text-align:center">Qtd</span><span style="text-align:right">Valor un.</span><span></span>
+            <span>Descricao</span><span style="text-align:center">Qtd</span><span style="text-align:right">Valor un.</span><span style="text-align:right">Custo un.</span><span></span>
           </div>
           <div id="itensList"></div>
           <div class="itens-footer" id="itensFooter" style="display:none">
@@ -207,7 +208,7 @@ textarea{resize:vertical}
           <div class="form-group"><label>Data de entrega</label><input id="oEntrega" type="date"/></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Custo material (R$)</label><input id="oCusto" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00"/></div>
+          <div class="form-group"><label>Custo material (R$) <span style="font-size:10px;color:var(--muted);font-weight:400">— soma dos itens</span></label><input id="oCusto" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00"/></div>
           <div class="form-group"><label>Outras despesas (R$)</label><input id="oDespesas" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00"/></div>
         </div>
         <div class="form-row">
@@ -678,7 +679,8 @@ function renderDashboard(){
   const thisMonth=orders.filter(o=>{const d=new Date(o.criado);return d.getMonth()===mn&&d.getFullYear()===yr&&o.status!=='cancelado';});
   const ent=thisMonth.filter(o=>o.status==='entregue');
   const fat=ent.reduce((s,o)=>s+orderTotal(o),0);
-  const cus=thisMonth.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
+  // Custos coerentes com o faturamento: somente pedidos ENTREGUES do mes
+  const cus=ent.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
   const luc=fat-cus;
   const pend=orders.filter(o=>o.pago!=='pago'&&o.status!=='cancelado').length;
   const estBx=products.filter(p=>Number(p.estoque||0)<=Number(p.estoqueMin||0)).length;
@@ -691,7 +693,7 @@ function renderDashboard(){
   orders.forEach(o=>{if(counts[o.status]!==undefined)counts[o.status]++;});
   const maxC=Math.max(1,...Object.values(counts));
   $('statusChart').innerHTML=Object.entries(counts).map(([k,v])=>'<div class="bar-row"><span class="bar-label">'+STATUS[k].label+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(v/maxC*100)+'%"></div></div><span class="bar-val">'+v+'</span></div>').join('')||'<div class="empty">Nenhum pedido ainda</div>';
-  const rec=ent.reduce((s,o)=>s+orderTotal(o),0), desp=thisMonth.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
+  const rec=ent.reduce((s,o)=>s+orderTotal(o),0), desp=ent.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
   $('monthResult').innerHTML=rec===0&&desp===0?'<div class="empty">Nenhum dado financeiro este mes</div>':
     '<div class="totals-row"><span>Receita</span><span class="profit-pos">'+BRL(rec)+'</span></div>'+
     '<div class="totals-row"><span>Custos + despesas</span><span class="profit-neg">'+BRL(desp)+'</span></div>'+
@@ -1019,28 +1021,36 @@ document.addEventListener('DOMContentLoaded',()=>{
 /* Itens form */
 function renderItensForm(){
   const list=$('itensList'), footer=$('itensFooter');
-  if(!formItens.length){list.innerHTML='<div style="padding:12px 10px;font-size:13px;color:var(--muted);text-align:center">Nenhum item adicionado</div>';footer.style.display='none';return;}
-  list.innerHTML=formItens.map((it,i)=>'<div class="item-row"><input type="text" value="'+escH(it.desc)+'" placeholder="Descricao" oninput="updItem('+i+',\'desc\',this.value)"/><input type="number" value="'+it.qtd+'" min="1" oninput="updItem('+i+',\'qtd\',this.value)"/><input type="number" value="'+(it.precoUnit||'')+'" min="0" step="0.01" placeholder="0,00" oninput="updItem('+i+',\'precoUnit\',this.value)"/><button type="button" class="item-del" onclick="remItem('+i+')">&#215;</button></div>').join('');
+  if(!formItens.length){list.innerHTML='<div style="padding:12px 10px;font-size:13px;color:var(--muted);text-align:center">Nenhum item adicionado</div>';footer.style.display='none';recalcTotal();return;}
+  list.innerHTML=formItens.map((it,i)=>'<div class="item-row">'+
+    '<input type="text" value="'+escH(it.desc)+'" placeholder="Descricao" oninput="updItem('+i+',\'desc\',this.value)"/>'+
+    '<input type="number" value="'+it.qtd+'" min="1" oninput="updItem('+i+',\'qtd\',this.value)"/>'+
+    '<input type="number" value="'+(it.precoUnit||'')+'" min="0" step="0.01" placeholder="0,00" oninput="updItem('+i+',\'precoUnit\',this.value)"/>'+
+    '<input type="number" value="'+(it.custoUnit||'')+'" min="0" step="0.01" placeholder="0,00" title="Custo unitario" oninput="updItem('+i+',\'custoUnit\',this.value)"/>'+
+    '<button type="button" class="item-del" onclick="remItem('+i+')">&#215;</button></div>').join('');
   recalcTotal(); footer.style.display='flex';
 }
 function recalcTotal(){
   const sub=formItens.reduce((s,i)=>s+Number(i.precoUnit||0)*Number(i.qtd||1),0);
+  const custoItens=formItens.reduce((s,i)=>s+Number(i.custoUnit||0)*Number(i.qtd||1),0);
   $('itensTotal').textContent=BRL(sub);
   $('itensFooter').style.display=formItens.length?'flex':'none';
+  // Atualiza o campo Custo material automaticamente a partir dos itens
+  const oCustoEl=$('oCusto');
+  if(oCustoEl) oCustoEl.value=custoItens>0?custoItens.toFixed(2):'';
   const d=Number($('oDesconto')?.value||0);
   const tipo=$('oDescontoTipo')?.value||'percent';
   const final=d>0?(tipo==='percent'?sub*(1-Math.min(d,100)/100):Math.max(0,sub-d)):sub;
   const vf=$('oValorFinal');
   if(vf) vf.textContent=BRL(final)+(d>0?' (desc. '+(tipo==='percent'?d+'%':BRL(d))+')':'');
 }
-window.updItem=function(i,f,v){if(!formItens[i])return;formItens[i][f]=(f==='qtd'||f==='precoUnit')?Number(v)||0:v;recalcTotal();};
+window.updItem=function(i,f,v){if(!formItens[i])return;formItens[i][f]=(f==='qtd'||f==='precoUnit'||f==='custoUnit')?Number(v)||0:v;recalcTotal();};
 window.remItem=function(i){formItens.splice(i,1);renderItensForm();};
-window.addItemRow=function(){formItens.push({id:uid(),desc:'',qtd:1,precoUnit:0});renderItensForm();setTimeout(()=>{const rows=$('itensList').querySelectorAll('.item-row');if(rows.length)rows[rows.length-1].querySelector('input').focus();},50);};
+window.addItemRow=function(){formItens.push({id:uid(),desc:'',qtd:1,precoUnit:0,custoUnit:0});renderItensForm();setTimeout(()=>{const rows=$('itensList').querySelectorAll('.item-row');if(rows.length)rows[rows.length-1].querySelector('input').focus();},50);};
 window.addItemFromCatalog=function(id){
   if(!id) return;
   const p=products.find(x=>x.id===id); if(!p){toast('Produto nao encontrado','error');return;}
-  formItens.push({id:uid(),desc:p.nome+(p.descricao?' - '+p.descricao:''),qtd:1,precoUnit:Number(p.preco)||0});
-  const cur=Number($('oCusto').value||0); $('oCusto').value=(cur+Number(p.custo||0)).toFixed(2);
+  formItens.push({id:uid(),desc:p.nome+(p.descricao?' - '+p.descricao:''),qtd:1,precoUnit:Number(p.preco)||0,custoUnit:Number(p.custo)||0});
   const inp=$('productSearchInput'); if(inp){inp.value='';}
   const res=$('productSearchResults'); if(res){res.style.display='none';res.innerHTML='';}
   renderItensForm();
@@ -1120,8 +1130,15 @@ function openOrderForm(id){
     $('oEntrega').value=o.entrega||''; $('oCusto').value=o.custo||''; $('oDespesas').value=o.despesas||'';
     $('oDesconto').value=o.desconto||''; $('oDescontoTipo').value=o.descontoTipo||'percent';
     $('oPgto').value=o.pagamento||'Pix'; $('oPago').value=o.pago||'pendente'; $('oObs').value=o.obs||'';
-    formItens=o.itens&&o.itens.length?o.itens.map(i=>({...i,id:i.id||uid()})):
-      (o.descricao?[{id:uid(),desc:o.descricao,qtd:Number(o.qtd||1),precoUnit:Number(o.valor||0)/Math.max(1,Number(o.qtd||1))}]:[]);
+    formItens=o.itens&&o.itens.length?o.itens.map(i=>({...i,id:i.id||uid(),custoUnit:Number(i.custoUnit)||0})):
+      (o.descricao?[{id:uid(),desc:o.descricao,qtd:Number(o.qtd||1),precoUnit:Number(o.valor||0)/Math.max(1,Number(o.qtd||1)),custoUnit:0}]:[]);
+    // Pedidos antigos sem custoUnit nos itens: distribui o.custo igualmente entre os itens (qtd-ponderado)
+    // Assim o auto-recalculo nao zera o custo de pedidos historicos quando o usuario abrir para editar.
+    if(formItens.length && formItens.every(i=>!i.custoUnit) && Number(o.custo||0)>0){
+      const totalQtd=formItens.reduce((s,i)=>s+Number(i.qtd||1),0)||1;
+      const cuMedio=Number(o.custo)/totalQtd;
+      formItens.forEach(i=>{ i.custoUnit=cuMedio; });
+    }
   } else {
     $('orderForm').reset(); $('orderId').value=''; formItens=[];
   }
@@ -1137,7 +1154,7 @@ async function submitOrder(e){
   const id=$('orderId').value;
   const btn=$('orderSubmitBtn'); btn.disabled=true; btn.textContent='Salvando...';
   const data={cliente:$('oCliente').value.trim(),whatsapp:$('oWhats').value.trim(),origem:$('oOrigem').value,
-    itens:formItens.map(i=>({id:i.id,desc:i.desc.trim(),qtd:Number(i.qtd)||1,precoUnit:Number(i.precoUnit)||0})),
+    itens:formItens.map(i=>({id:i.id,desc:i.desc.trim(),qtd:Number(i.qtd)||1,precoUnit:Number(i.precoUnit)||0,custoUnit:Number(i.custoUnit)||0})),
     desconto:Number($('oDesconto').value||0),descontoTipo:$('oDescontoTipo').value,
     custo:Number($('oCusto').value||0),despesas:Number($('oDespesas').value||0),
     status:$('oStatus').value,entrega:$('oEntrega').value,pagamento:$('oPgto').value,
@@ -1235,7 +1252,8 @@ function renderFinanceiro(){
   };
   const mo=orders.filter(o=>inPeriod(o)&&o.status!=='cancelado');
   const ent=mo.filter(o=>o.status==='entregue');
-  const rec=ent.reduce((s,o)=>s+orderTotal(o),0), cus=mo.reduce((s,o)=>s+Number(o.custo||0),0), des=mo.reduce((s,o)=>s+Number(o.despesas||0),0);
+  // Coerencia: receita E custos vem dos ENTREGUES do periodo (lucro realizado)
+  const rec=ent.reduce((s,o)=>s+orderTotal(o),0), cus=ent.reduce((s,o)=>s+Number(o.custo||0),0), des=ent.reduce((s,o)=>s+Number(o.despesas||0),0);
   const luc=rec-cus-des, tk=ent.length?rec/ent.length:0, mg=rec?Math.round((luc/rec)*100):0, pend=mo.filter(o=>o.pago!=='pago').length;
   $('finKpis').innerHTML=
     '<div class="kpi kpi-hl"><div class="label">Receita</div><div class="value">'+BRL(rec)+'</div><div class="sub">'+ent.length+' entregues</div></div>'+
