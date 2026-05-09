@@ -677,15 +677,15 @@ function renderDashboard(){
   const now=new Date(), mn=now.getMonth(), yr=now.getFullYear();
   $('dashSubtitle').textContent=MONTHS[mn]+' de '+yr;
   const thisMonth=orders.filter(o=>{const d=new Date(o.criado);return d.getMonth()===mn&&d.getFullYear()===yr&&o.status!=='cancelado';});
-  const ent=thisMonth.filter(o=>o.status==='entregue');
-  const fat=ent.reduce((s,o)=>s+orderTotal(o),0);
-  // Custos coerentes com o faturamento: somente pedidos ENTREGUES do mes
-  const cus=ent.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
+  // Criterio: pedidos PAGOS no mes (entram no caixa quando o pagamento e confirmado)
+  const pagos=thisMonth.filter(o=>o.pago==='pago');
+  const fat=pagos.reduce((s,o)=>s+orderTotal(o),0);
+  const cus=pagos.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
   const luc=fat-cus;
   const pend=orders.filter(o=>o.pago!=='pago'&&o.status!=='cancelado').length;
   const estBx=products.filter(p=>Number(p.estoque||0)<=Number(p.estoqueMin||0)).length;
   $('kpiGrid').innerHTML=
-    '<div class="kpi kpi-hl"><div class="label">Faturamento</div><div class="value">'+BRL(fat)+'</div><div class="sub">Entregues este mes</div></div>'+
+    '<div class="kpi kpi-hl"><div class="label">Faturamento</div><div class="value">'+BRL(fat)+'</div><div class="sub">Pagos este mes</div></div>'+
     '<div class="kpi"><div class="label">Lucro</div><div class="value '+(luc>=0?'profit-pos':'profit-neg')+'">'+BRL(luc)+'</div><div class="sub">Receita menos custos</div></div>'+
     '<div class="kpi"><div class="label">Pedidos</div><div class="value">'+thisMonth.length+'</div><div class="sub">Este mes</div></div>'+
     '<div class="kpi"><div class="label">Pgto pendente</div><div class="value" style="'+(pend?'color:var(--red)':'')+'">'+pend+'</div><div class="sub">'+(estBx?estBx+' prod. estoque baixo':'Estoque OK')+'</div></div>';
@@ -693,7 +693,7 @@ function renderDashboard(){
   orders.forEach(o=>{if(counts[o.status]!==undefined)counts[o.status]++;});
   const maxC=Math.max(1,...Object.values(counts));
   $('statusChart').innerHTML=Object.entries(counts).map(([k,v])=>'<div class="bar-row"><span class="bar-label">'+STATUS[k].label+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(v/maxC*100)+'%"></div></div><span class="bar-val">'+v+'</span></div>').join('')||'<div class="empty">Nenhum pedido ainda</div>';
-  const rec=ent.reduce((s,o)=>s+orderTotal(o),0), desp=ent.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
+  const rec=pagos.reduce((s,o)=>s+orderTotal(o),0), desp=pagos.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
   $('monthResult').innerHTML=rec===0&&desp===0?'<div class="empty">Nenhum dado financeiro este mes</div>':
     '<div class="totals-row"><span>Receita</span><span class="profit-pos">'+BRL(rec)+'</span></div>'+
     '<div class="totals-row"><span>Custos + despesas</span><span class="profit-neg">'+BRL(desp)+'</span></div>'+
@@ -1251,22 +1251,23 @@ function renderFinanceiro(){
     return d.getMonth()===selMonth&&d.getFullYear()===selYear;
   };
   const mo=orders.filter(o=>inPeriod(o)&&o.status!=='cancelado');
-  const ent=mo.filter(o=>o.status==='entregue');
-  // Coerencia: receita E custos vem dos ENTREGUES do periodo (lucro realizado)
-  const rec=ent.reduce((s,o)=>s+orderTotal(o),0), cus=ent.reduce((s,o)=>s+Number(o.custo||0),0), des=ent.reduce((s,o)=>s+Number(o.despesas||0),0);
-  const luc=rec-cus-des, tk=ent.length?rec/ent.length:0, mg=rec?Math.round((luc/rec)*100):0, pend=mo.filter(o=>o.pago!=='pago').length;
+  // Criterio: pedidos PAGOS (entram no caixa quando o pagamento e confirmado)
+  const pagos=mo.filter(o=>o.pago==='pago');
+  const rec=pagos.reduce((s,o)=>s+orderTotal(o),0), cus=pagos.reduce((s,o)=>s+Number(o.custo||0),0), des=pagos.reduce((s,o)=>s+Number(o.despesas||0),0);
+  const luc=rec-cus-des, tk=pagos.length?rec/pagos.length:0, mg=rec?Math.round((luc/rec)*100):0, pend=mo.filter(o=>o.pago!=='pago').length;
   $('finKpis').innerHTML=
-    '<div class="kpi kpi-hl"><div class="label">Receita</div><div class="value">'+BRL(rec)+'</div><div class="sub">'+ent.length+' entregues</div></div>'+
+    '<div class="kpi kpi-hl"><div class="label">Receita</div><div class="value">'+BRL(rec)+'</div><div class="sub">'+pagos.length+' pago(s)</div></div>'+
     '<div class="kpi"><div class="label">Custos totais</div><div class="value">'+BRL(cus+des)+'</div><div class="sub">Material + despesas</div></div>'+
     '<div class="kpi"><div class="label">Lucro</div><div class="value '+(luc>=0?'profit-pos':'profit-neg')+'">'+BRL(luc)+'</div><div class="sub">Margem: '+mg+'%</div></div>'+
     '<div class="kpi"><div class="label">Ticket medio</div><div class="value">'+BRL(tk)+'</div><div class="sub">'+pend+' pgto(s) pendente(s)</div></div>';
   $('finResultado').innerHTML=mo.length===0?'<div class="empty">Nenhum pedido neste mes</div>':
-    '<div class="totals-row"><span>Receita (entregues)</span><span class="profit-pos">'+BRL(rec)+'</span></div>'+
+    '<div class="totals-row"><span>Receita (pagos)</span><span class="profit-pos">'+BRL(rec)+'</span></div>'+
     '<div class="totals-row"><span>Custo de material</span><span>'+BRL(cus)+'</span></div>'+
     '<div class="totals-row"><span>Outras despesas</span><span>'+BRL(des)+'</span></div>'+
     '<div class="totals-row" style="background:'+(luc>=0?'#e7f4eb':'#fce9eb')+'"><span><strong>Lucro liquido</strong></span><span class="'+(luc>=0?'profit-pos':'profit-neg')+'">'+BRL(luc)+'</span></div>';
   const bySrc={};
-  mo.forEach(o=>{bySrc[o.origem]=(bySrc[o.origem]||0)+orderTotal(o);});
+  // Receita por origem coerente com o KPI Receita (so pedidos pagos)
+  pagos.forEach(o=>{bySrc[o.origem]=(bySrc[o.origem]||0)+orderTotal(o);});
   const maxS=Math.max(1,...Object.values(bySrc));
   $('finSources').innerHTML=Object.keys(bySrc).length?Object.entries(bySrc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="bar-row"><span class="bar-label">'+escH(k)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(v/maxS*100)+'%"></div></div><span class="bar-val">'+BRL(v)+'</span></div>').join(''):'<div class="empty">Sem dados de origem</div>';
   _finMoCache=mo;
