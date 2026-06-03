@@ -150,6 +150,7 @@ textarea{resize:vertical}
     <button class="btn btn-primary btn-full" onclick="openOrderForm()" style="margin-bottom:14px">+ Novo Pedido</button>
     <div class="tab-bar" id="orderTabs">
       <button class="active" data-filter="all">Todos</button>
+      <button data-filter="areceber">💰 A receber</button>
       <button data-filter="novo">Novos</button>
       <button data-filter="producao">Producao</button>
       <button data-filter="pronto">Prontos</button>
@@ -310,8 +311,9 @@ textarea{resize:vertical}
       <button onclick="changeMonth(1)">&#8594;</button>
     </div>
     <div class="tab-bar" id="finBasis" style="margin-bottom:10px">
-      <button class="active" data-basis="criado" title="Considera o mes em que o pedido foi criado">Por criação</button>
+      <button class="active" data-basis="pago" title="Considera a data em que o pagamento foi confirmado (caixa real)">Por pagamento</button>
       <button data-basis="entrega" title="Considera o mes da data de entrega">Por entrega</button>
+      <button data-basis="criado" title="Considera o mes em que o pedido foi criado">Por criação</button>
     </div>
     <div class="kpi-grid" id="finKpis"></div>
     <div class="card"><h3>Resultado do mes</h3><div id="finResultado"></div></div>
@@ -493,7 +495,8 @@ function dbToOrder(r){
     status:r.status||'novo',itens:Array.isArray(r.itens)?r.itens:[],valor:r.valor||0,
     custo:r.custo||0,despesas:r.despesas||0,desconto:r.desconto||0,
     descontoTipo:r.desconto_tipo||'percent',pagamento:r.pagamento||'Pix',
-    pago:r.pago||'pendente',entrega:r.entrega||'',obs:r.obs||'',criado:r.criado};
+    pago:r.pago||'pendente',entrega:r.entrega||'',obs:r.obs||'',criado:r.criado,
+    pagoEm:r.pago_em||null};
 }
 function dbToProduct(r){
   return {id:r.id,nome:r.nome,categoria:r.categoria||'Laco infantil',
@@ -506,7 +509,8 @@ function orderToDb(o){
     custo:o.custo||0,despesas:o.despesas||0,desconto:o.desconto||0,
     desconto_tipo:o.descontoTipo||'percent',pagamento:o.pagamento||'Pix',
     pago:o.pago||'pendente',entrega:o.entrega||null,obs:o.obs||'',
-    criado:o.criado||new Date().toISOString()};
+    criado:o.criado||new Date().toISOString(),
+    pago_em:o.pagoEm||null};
 }
 function productToDb(p){
   return {id:p.id,nome:p.nome,categoria:p.categoria||'Laco infantil',
@@ -677,15 +681,21 @@ function renderDashboard(){
   const now=new Date(), mn=now.getMonth(), yr=now.getFullYear();
   $('dashSubtitle').textContent=MONTHS[mn]+' de '+yr;
   const thisMonth=orders.filter(o=>{const d=new Date(o.criado);return d.getMonth()===mn&&d.getFullYear()===yr&&o.status!=='cancelado';});
-  // Criterio: pedidos PAGOS no mes (entram no caixa quando o pagamento e confirmado)
-  const pagos=thisMonth.filter(o=>o.pago==='pago');
+  // Criterio: pedidos PAGOS cuja data de pagamento (pagoEm) caiu neste mes (entra no caixa quando o pgto e confirmado)
+  // Pedidos antigos sem pagoEm: fallback para criado
+  const pagos=orders.filter(o=>{
+    if(o.pago!=='pago'||o.status==='cancelado') return false;
+    const ref=o.pagoEm||o.entrega||o.criado; if(!ref) return false;
+    const d=new Date(ref);
+    return d.getMonth()===mn&&d.getFullYear()===yr;
+  });
   const fat=pagos.reduce((s,o)=>s+orderTotal(o),0);
   const cus=pagos.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
   const luc=fat-cus;
   const pend=orders.filter(o=>o.pago!=='pago'&&o.status!=='cancelado').length;
   const estBx=products.filter(p=>Number(p.estoque||0)<=Number(p.estoqueMin||0)).length;
   $('kpiGrid').innerHTML=
-    '<div class="kpi kpi-hl"><div class="label">Faturamento</div><div class="value">'+BRL(fat)+'</div><div class="sub">Pagos este mes</div></div>'+
+    '<div class="kpi kpi-hl"><div class="label">Faturamento</div><div class="value">'+BRL(fat)+'</div><div class="sub">Recebido este mes</div></div>'+
     '<div class="kpi"><div class="label">Lucro</div><div class="value '+(luc>=0?'profit-pos':'profit-neg')+'">'+BRL(luc)+'</div><div class="sub">Receita menos custos</div></div>'+
     '<div class="kpi"><div class="label">Pedidos</div><div class="value">'+thisMonth.length+'</div><div class="sub">Este mes</div></div>'+
     '<div class="kpi"><div class="label">Pgto pendente</div><div class="value" style="'+(pend?'color:var(--red)':'')+'">'+pend+'</div><div class="sub">'+(estBx?estBx+' prod. estoque baixo':'Estoque OK')+'</div></div>';
@@ -707,10 +717,20 @@ function renderOrders(){
   const filter=document.querySelector('#orderTabs .active')?.dataset.filter||'all';
   const search=norm($('orderSearch')?.value);
   let list=[...orders];
-  if(filter!=='all') list=list.filter(o=>o.status===filter);
+  if(filter==='areceber'){
+    list=list.filter(o=>o.pago!=='pago'&&o.status!=='cancelado');
+  } else if(filter!=='all'){
+    list=list.filter(o=>o.status===filter);
+  }
   if(search) list=list.filter(o=>{const t=(o.itens||[]).map(i=>i.desc).join(' ');return norm(o.cliente+' '+t+' '+o.origem+' '+(o.whatsapp||'')).includes(search);});
   list.sort((a,b)=>new Date(b.criado)-new Date(a.criado));
-  $('ordersList').innerHTML=list.length?list.map(o=>{
+  // Banner com total a receber quando o filtro esta ativo
+  let banner='';
+  if(filter==='areceber'&&list.length){
+    const totRec=list.reduce((s,o)=>s+orderTotal(o),0);
+    banner='<div style="background:linear-gradient(135deg,#fff1de 0%,#fff7e8 100%);border:1px solid #e9c987;border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:11px;color:#a06a19;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Total a receber</div><div style="font-size:22px;color:#a06a19;font-weight:800">'+BRL(totRec)+'</div></div><div style="text-align:right"><div style="font-size:11px;color:#a06a19;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Pedidos</div><div style="font-size:22px;color:#a06a19;font-weight:800">'+list.length+'</div></div></div>';
+  }
+  $('ordersList').innerHTML=banner+(list.length?list.map(o=>{
     const sub=orderSubtotal(o), tot=orderTotal(o), luc=tot-Number(o.custo||0)-Number(o.despesas||0);
     const descTag=o.desconto&&Number(o.desconto)>0?' <span style="font-size:10px;background:#fff1de;color:#a06a19;padding:2px 7px;border-radius:999px;font-weight:700">DESC '+(o.descontoTipo==='percent'?Number(o.desconto)+'%':BRL(o.desconto))+'</span>':'';
     const quickBtns=
@@ -721,7 +741,7 @@ function renderOrders(){
       (o.whatsapp?'<button class="btn btn-soft" style="flex:0 0 auto;padding:7px 11px" onclick="waClient(\''+o.id+'\')" title="Abrir WhatsApp">💬</button>':'')+
       '</div>';
     return '<div class="list-item" onclick="openOrderForm(\''+o.id+'\')"><div class="head"><div><strong>'+escH(o.cliente)+'</strong><div class="small">'+fmtDate(o.entrega)+' - '+escH(o.origem)+'</div></div><span class="status '+(STATUS[o.status]?.cls||'st-novo')+'">'+escH(STATUS[o.status]?.label||o.status)+'</span></div><div class="small" style="margin-bottom:6px">'+escH(itensSummary(o))+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span><strong>'+BRL(tot)+'</strong>'+descTag+' - <span class="pago-'+o.pago+'">'+escH(o.pago).toUpperCase()+'</span></span><span class="small '+(luc>=0?'profit-pos':'profit-neg')+'">Lucro '+BRL(luc)+'</span></div>'+quickBtns+'</div>';
-  }).join(''):'<div class="empty">Nenhum pedido encontrado</div>';
+  }).join(''):'<div class="empty">Nenhum pedido encontrado</div>');
 }
 document.querySelectorAll('#orderTabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#orderTabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderOrders();}));
 $('orderSearch')?.addEventListener('input',renderOrders);
@@ -741,6 +761,7 @@ async function quickMarkPaid(id){
   const ok=await showDialog({title:'Marcar como pago',message:'Confirmar pagamento do pedido de '+o.cliente+'?',okText:'Marcar pago',cancelText:'Cancelar'});
   if(!ok) return;
   o.pago='pago';
+  o.pagoEm=new Date().toISOString(); // carimba a data de pagamento (entra no caixa do mes)
   if(await saveOrder(o)){await loadAll(); renderOrders(); toast('Pedido marcado como pago','success');}
 }
 window.quickMarkPaid=quickMarkPaid;
@@ -1160,6 +1181,15 @@ async function submitOrder(e){
     status:$('oStatus').value,entrega:$('oEntrega').value,pagamento:$('oPgto').value,
     pago:$('oPago').value,obs:$('oObs').value.trim()};
   const order=id?{...orders.find(o=>o.id===id),...data}:{id:uid(),...data,criado:new Date().toISOString()};
+  // Carimba pagoEm na transicao para "pago" e limpa se voltou pra pendente/parcial
+  const prev=id?orders.find(o=>o.id===id):null;
+  const wasPago=prev&&prev.pago==='pago';
+  const isPago=order.pago==='pago';
+  if(isPago&&!wasPago){
+    order.pagoEm=new Date().toISOString();
+  } else if(!isPago){
+    order.pagoEm=null;
+  }
   const ok=await saveOrder(order);
   btn.disabled=false; btn.textContent=id?'Atualizar Pedido':'Salvar Pedido';
   if(!ok) return;
@@ -1240,19 +1270,28 @@ function changeMonth(d){selMonth+=d;if(selMonth>11){selMonth=0;selYear++;}if(sel
 window.changeMonth=changeMonth;
 document.querySelectorAll('#finBasis button').forEach(b=>b.addEventListener('click',()=>{_finBasis=b.dataset.basis;localStorage.setItem('atelie_finBasis',_finBasis);renderFinanceiro();}));
 let _finMoCache=[];
-let _finBasis=localStorage.getItem('atelie_finBasis')||'criado';
+let _finBasis=localStorage.getItem('atelie_finBasis')||'pago';
 function renderFinanceiro(){
   $('monthLabel').textContent=MONTHS[selMonth]+' '+selYear;
   document.querySelectorAll('#finBasis button').forEach(b=>b.classList.toggle('active',b.dataset.basis===_finBasis));
   const inPeriod=o=>{
-    const raw=_finBasis==='entrega'?(o.entrega||o.criado):o.criado;
+    let raw;
+    if(_finBasis==='pago'){
+      // Por pagamento: usa pagoEm (com fallback para criado em historicos sem data carimbada)
+      raw=o.pagoEm||o.criado;
+    } else if(_finBasis==='entrega'){
+      raw=o.entrega||o.criado;
+    } else {
+      raw=o.criado;
+    }
     if(!raw) return false;
     const d=_finBasis==='entrega'&&o.entrega?new Date(o.entrega+'T12:00:00'):new Date(raw);
     return d.getMonth()===selMonth&&d.getFullYear()===selYear;
   };
-  const mo=orders.filter(o=>inPeriod(o)&&o.status!=='cancelado');
-  // Criterio: pedidos PAGOS (entram no caixa quando o pagamento e confirmado)
-  const pagos=mo.filter(o=>o.pago==='pago');
+  // Por pagamento: ja restringe ao pedidos pagos (caixa real). Outras bases mantem o comportamento antigo.
+  const baseList=_finBasis==='pago'?orders.filter(o=>o.pago==='pago'&&o.status!=='cancelado'):orders.filter(o=>o.status!=='cancelado');
+  const mo=baseList.filter(inPeriod);
+  const pagos=_finBasis==='pago'?mo:mo.filter(o=>o.pago==='pago');
   const rec=pagos.reduce((s,o)=>s+orderTotal(o),0), cus=pagos.reduce((s,o)=>s+Number(o.custo||0),0), des=pagos.reduce((s,o)=>s+Number(o.despesas||0),0);
   const luc=rec-cus-des, tk=pagos.length?rec/pagos.length:0, mg=rec?Math.round((luc/rec)*100):0, pend=mo.filter(o=>o.pago!=='pago').length;
   $('finKpis').innerHTML=
