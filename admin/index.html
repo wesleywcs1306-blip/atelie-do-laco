@@ -895,12 +895,13 @@ async function _renderOrderPdf(o, mode){
     const w=wrap.scrollWidth;
     console.log('[PDF] wrap dims:', w, 'x', h);
     const worker=html2pdf().from(wrap).set({
-      margin:[10,10,10,10],
+      margin:[12,10,12,10],
       filename:filename,
       image:{type:'jpeg',quality:0.95},
-      html2canvas:{scale:1.5,useCORS:true,backgroundColor:'#ffffff',logging:false,width:w,height:h,scrollX:0,scrollY:0,windowWidth:w,windowHeight:h},
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-      pagebreak:{mode:['avoid-all','css','legacy']}
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,width:w,height:h,scrollX:0,scrollY:0,windowWidth:w,windowHeight:h},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
+      // Permite quebra natural entre paginas; evita cortar DENTRO de elementos (pagebreak-inside:avoid)
+      pagebreak:{mode:['css','legacy'],avoid:['.pdf-block','tr','li']}
     });
     if(mode==='blob'){
       const blob=await worker.outputPdf('blob');
@@ -1405,7 +1406,32 @@ $('oCliente')?.addEventListener('change',()=>{
 
 /* Boot */
 checkAuth();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+// Registra SW com auto-update: detecta nova versao, ativa imediatamente e recarrega a pagina
+if('serviceWorker' in navigator){
+  let _swReloading=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    // SW novo assumiu o controle: recarrega para pegar HTML fresco
+    if(_swReloading) return;
+    _swReloading=true;
+    window.location.reload();
+  });
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    // Toda vez que a pagina abre, verifica updates
+    reg.update().catch(()=>{});
+    // Quando detecta SW novo instalando, espera ele ficar pronto e manda ativar
+    reg.addEventListener('updatefound',()=>{
+      const nw=reg.installing; if(!nw) return;
+      nw.addEventListener('statechange',()=>{
+        if(nw.state==='installed' && navigator.serviceWorker.controller){
+          // SW novo instalado, tem outro controlando: pede pra pular a espera
+          nw.postMessage('skipWaiting');
+        }
+      });
+    });
+  }).catch(()=>{});
+  // Verifica updates a cada 60s enquanto a aba estiver aberta
+  setInterval(()=>{ navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{}); }, 60000);
+}
 </script>
 </body>
 </html>
