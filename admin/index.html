@@ -175,14 +175,18 @@
             </div>
           </div>
           <div class="form-row" id="partialPaymentRow" style="display:none">
-            <div class="form-group">
+            <div class="form-group" id="oValorPagoGroup">
               <label>Valor recebido (R$)</label>
               <input id="oValorPago" type="number" min="0" step="0.01" placeholder="0,00" />
             </div>
             <div class="form-group">
-              <label>Data do recebimento</label>
+              <label>Data do pagamento</label>
               <input id="oPagoEm" type="date" />
             </div>
+          </div>
+          <div class="form-group" id="partialRemainingRow" style="display:none">
+            <label>Valor restante (a receber)</label>
+            <div id="oValorRestante" class="value-box">—</div>
           </div>
           <div class="form-group">
             <label>Observações</label>
