@@ -235,6 +235,17 @@ textarea{resize:vertical}
           <textarea id="oObs" rows="2" placeholder="Cor, personalizacao, detalhes..."></textarea>
         </div>
       </div>
+      <div class="card" id="paymentsCard" style="margin-bottom:14px;display:none">
+        <h3>Pagamentos</h3>
+        <p class="small" style="margin:-6px 0 12px">A situacao acima e definida automaticamente pelos pagamentos registrados aqui. Se nunca houve pagamento, ela continua manual.</p>
+        <div id="paymentsSummary" style="margin-bottom:10px"></div>
+        <div id="paymentsList"></div>
+        <div class="form-row" style="margin-top:10px">
+          <div class="form-group"><label>Valor recebido (R$)</label><input id="payValor" type="number" min="0" step="0.01" placeholder="0,00"/></div>
+          <div class="form-group"><label>Data</label><input id="payData" type="date"/></div>
+        </div>
+        <button type="button" class="btn btn-success btn-full" onclick="registrarPagamento()">+ Registrar pagamento</button>
+      </div>
       <button class="btn btn-primary" type="submit" id="orderSubmitBtn">Salvar Pedido</button>
       <div style="height:8px"></div>
       <button class="btn btn-outline btn-full" type="button" id="orderSummaryBtn" style="display:none">📤 Gerar resumo para cliente</button>
@@ -482,7 +493,7 @@ function showDialog({title,message,okText='OK',cancelText,danger}={}){
 const MONTHS=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const STATUS={novo:{label:'Novo pedido',cls:'st-novo'},producao:{label:'Em producao',cls:'st-producao'},pronto:{label:'Pronto',cls:'st-pronto'},entregue:{label:'Entregue',cls:'st-entregue'},cancelado:{label:'Cancelado',cls:'st-cancelado'}};
 
-let orders=[],products=[],selMonth=new Date().getMonth(),selYear=new Date().getFullYear();
+let orders=[],products=[],payments=[],selMonth=new Date().getMonth(),selYear=new Date().getFullYear();
 let formItens=[];
 let currentUserEmail='';
 
@@ -518,18 +529,27 @@ function productToDb(p){
     estoque:p.estoque||0,estoque_min:p.estoqueMin||3,obs:p.obs||'',
     criado:p.criado||new Date().toISOString()};
 }
+function dbToPayment(r){
+  return {id:r.id,orderId:r.order_id,valor:r.valor||0,data:r.data,obs:r.obs||'',criado:r.criado};
+}
+function paymentToDb(p){
+  return {id:p.id,order_id:p.orderId,valor:p.valor||0,data:p.data||new Date().toISOString(),obs:p.obs||''};
+}
 
 /* Data ops */
 async function loadAll(){
   setLoading(true);
-  const [ordRes,prodRes]=await Promise.all([
+  const [ordRes,prodRes,payRes]=await Promise.all([
     sb.from('orders').select('*').order('criado',{ascending:false}),
-    sb.from('products').select('*').order('nome')
+    sb.from('products').select('*').order('nome'),
+    sb.from('payments').select('*').order('data',{ascending:true})
   ]);
   if(ordRes.error) console.error('orders:',ordRes.error);
   if(prodRes.error) console.error('products:',prodRes.error);
+  if(payRes.error) console.error('payments:',payRes.error);
   orders=(ordRes.data||[]).map(dbToOrder);
   products=(prodRes.data||[]).map(dbToProduct);
+  payments=(payRes.data||[]).map(dbToPayment);
   setLoading(false);
 }
 async function saveOrder(o){
@@ -551,6 +571,54 @@ async function deleteProduct(id){
   const {error}=await sb.from('products').delete().eq('id',id);
   if(error){toast('Erro ao excluir produto','error');return false;}
   return true;
+}
+
+/* ===== Pagamentos (historico de pagamentos parciais) ===== */
+function paymentsFor(orderId){
+  return payments.filter(p=>p.orderId===orderId);
+}
+function orderPaidTotal(o){
+  return paymentsFor(o.id).reduce((s,p)=>s+Number(p.valor||0),0);
+}
+function orderSaldo(o){
+  return Math.max(0, orderTotal(o)-orderPaidTotal(o));
+}
+async function addPayment(orderId,valor,dataStr,obs){
+  valor=Number(valor)||0;
+  if(valor<=0){toast('Informe um valor valido para o pagamento','error');return false;}
+  const pay={id:uid(),orderId,valor,
+    data:dataStr?new Date(dataStr+'T12:00:00').toISOString():new Date().toISOString(),
+    obs:obs||''};
+  const {error}=await sb.from('payments').insert(paymentToDb(pay));
+  if(error){toast('Erro ao registrar pagamento: '+error.message,'error');return false;}
+  await syncOrderPaymentStatus(orderId);
+  return true;
+}
+async function deletePayment(paymentId,orderId){
+  const {error}=await sb.from('payments').delete().eq('id',paymentId);
+  if(error){toast('Erro ao excluir pagamento','error');return false;}
+  await syncOrderPaymentStatus(orderId);
+  return true;
+}
+// Recalcula pendente/parcial/pago a partir do historico de pagamentos do pedido.
+// Sempre que o saldo chega a zero (ou menos), o pedido vira "pago" automaticamente
+// e carimba pagoEm com a data do ultimo pagamento.
+async function syncOrderPaymentStatus(orderId){
+  await loadAll();
+  const o=orders.find(x=>x.id===orderId);
+  if(!o) return;
+  const pays=paymentsFor(o.id).slice().sort((a,b)=>new Date(a.data)-new Date(b.data));
+  const paid=pays.reduce((s,p)=>s+Number(p.valor||0),0);
+  const tot=orderTotal(o);
+  let novoPago,novoPagoEm;
+  if(paid<=0){ novoPago='pendente'; novoPagoEm=null; }
+  else if(paid+0.01>=tot){ novoPago='pago'; novoPagoEm=pays[pays.length-1].data; }
+  else { novoPago='parcial'; novoPagoEm=null; }
+  if(novoPago!==o.pago||novoPagoEm!==o.pagoEm){
+    o.pago=novoPago; o.pagoEm=novoPagoEm;
+    await saveOrder(o);
+    await loadAll();
+  }
 }
 
 /* Auth */
@@ -681,19 +749,26 @@ function renderDashboard(){
   const now=new Date(), mn=now.getMonth(), yr=now.getFullYear();
   $('dashSubtitle').textContent=MONTHS[mn]+' de '+yr;
   const thisMonth=orders.filter(o=>{const d=new Date(o.criado);return d.getMonth()===mn&&d.getFullYear()===yr&&o.status!=='cancelado';});
-  // Criterio: pedidos PAGOS cuja data de pagamento (pagoEm) caiu neste mes (entra no caixa quando o pgto e confirmado)
-  // Pedidos antigos sem pagoEm: fallback para criado
-  const pagos=orders.filter(o=>{
-    if(o.pago!=='pago'||o.status==='cancelado') return false;
-    const ref=o.pagoEm||o.entrega||o.criado; if(!ref) return false;
-    const d=new Date(ref);
+  // Criterio (regime de caixa): soma dos PAGAMENTOS recebidos neste mes, incluindo
+  // pagamentos parciais de pedidos que ainda nao fecharam. Custo entra proporcional
+  // ao quanto daquele pedido ja foi pago (mantem a margem coerente por recebimento).
+  const ordersById={}; orders.forEach(o=>{ordersById[o.id]=o;});
+  const paysThisMonth=payments.filter(p=>{
+    const o=ordersById[p.orderId]; if(!o||o.status==='cancelado') return false;
+    const d=new Date(p.data);
     return d.getMonth()===mn&&d.getFullYear()===yr;
   });
-  const fat=pagos.reduce((s,o)=>s+orderTotal(o),0);
-  const cus=pagos.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
+  const fat=paysThisMonth.reduce((s,p)=>s+Number(p.valor||0),0);
+  const cus=paysThisMonth.reduce((s,p)=>{
+    const o=ordersById[p.orderId]; if(!o) return s;
+    const tot=orderTotal(o)||1;
+    const prop=Number(p.valor||0)/tot;
+    return s+prop*(Number(o.custo||0)+Number(o.despesas||0));
+  },0);
   const luc=fat-cus;
+  // A receber = saldo devedor real (total menos ja pago), nao o valor cheio do pedido
   const pendList=orders.filter(o=>o.pago!=='pago'&&o.status!=='cancelado');
-  const pendVal=pendList.reduce((s,o)=>s+orderTotal(o),0);
+  const pendVal=pendList.reduce((s,o)=>s+orderSaldo(o),0);
   const pendCount=pendList.length;
   const estBx=products.filter(p=>Number(p.estoque||0)<=Number(p.estoqueMin||0)).length;
   $('kpiGrid').innerHTML=
@@ -705,11 +780,10 @@ function renderDashboard(){
   orders.forEach(o=>{if(counts[o.status]!==undefined)counts[o.status]++;});
   const maxC=Math.max(1,...Object.values(counts));
   $('statusChart').innerHTML=Object.entries(counts).map(([k,v])=>'<div class="bar-row"><span class="bar-label">'+STATUS[k].label+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(v/maxC*100)+'%"></div></div><span class="bar-val">'+v+'</span></div>').join('')||'<div class="empty">Nenhum pedido ainda</div>';
-  const rec=pagos.reduce((s,o)=>s+orderTotal(o),0), desp=pagos.reduce((s,o)=>s+Number(o.custo||0)+Number(o.despesas||0),0);
-  $('monthResult').innerHTML=rec===0&&desp===0?'<div class="empty">Nenhum dado financeiro este mes</div>':
-    '<div class="totals-row"><span>Receita</span><span class="profit-pos">'+BRL(rec)+'</span></div>'+
-    '<div class="totals-row"><span>Custos + despesas</span><span class="profit-neg">'+BRL(desp)+'</span></div>'+
-    '<div class="totals-row" style="background:'+(rec-desp>=0?'#e7f4eb':'#fce9eb')+'"><span><strong>Resultado</strong></span><span class="'+(rec-desp>=0?'profit-pos':'profit-neg')+'">'+BRL(rec-desp)+'</span></div>';
+  $('monthResult').innerHTML=fat===0&&cus===0?'<div class="empty">Nenhum dado financeiro este mes</div>':
+    '<div class="totals-row"><span>Receita (recebida)</span><span class="profit-pos">'+BRL(fat)+'</span></div>'+
+    '<div class="totals-row"><span>Custos + despesas (proporcional)</span><span class="profit-neg">'+BRL(cus)+'</span></div>'+
+    '<div class="totals-row" style="background:'+(luc>=0?'#e7f4eb':'#fce9eb')+'"><span><strong>Resultado</strong></span><span class="'+(luc>=0?'profit-pos':'profit-neg')+'">'+BRL(luc)+'</span></div>';
   const up=orders.filter(o=>o.status!=='entregue'&&o.status!=='cancelado'&&o.entrega).sort((a,b)=>a.entrega.localeCompare(b.entrega)).slice(0,5);
   $('nextDeliveries').innerHTML=up.length?up.map(o=>'<div class="list-item" onclick="openOrderForm(\''+o.id+'\')"><div class="head"><strong>'+escH(o.cliente)+'</strong><span class="status '+STATUS[o.status].cls+'">'+STATUS[o.status].label+'</span></div><div class="small">'+escH(itensSummary(o))+' - Entrega: '+fmtDate(o.entrega)+' - <span class="pago-'+o.pago+'">'+escH(o.pago).toUpperCase()+'</span></div></div>').join(''):'<div class="empty">Nenhuma entrega pendente</div>';
 }
@@ -729,12 +803,13 @@ function renderOrders(){
   // Banner com total a receber quando o filtro esta ativo
   let banner='';
   if(filter==='areceber'&&list.length){
-    const totRec=list.reduce((s,o)=>s+orderTotal(o),0);
+    const totRec=list.reduce((s,o)=>s+orderSaldo(o),0);
     banner='<div style="background:linear-gradient(135deg,#fff1de 0%,#fff7e8 100%);border:1px solid #e9c987;border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:11px;color:#a06a19;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Total a receber</div><div style="font-size:22px;color:#a06a19;font-weight:800">'+BRL(totRec)+'</div></div><div style="text-align:right"><div style="font-size:11px;color:#a06a19;text-transform:uppercase;letter-spacing:.08em;font-weight:700">Pedidos</div><div style="font-size:22px;color:#a06a19;font-weight:800">'+list.length+'</div></div></div>';
   }
   $('ordersList').innerHTML=banner+(list.length?list.map(o=>{
     const sub=orderSubtotal(o), tot=orderTotal(o), luc=tot-Number(o.custo||0)-Number(o.despesas||0);
     const descTag=o.desconto&&Number(o.desconto)>0?' <span style="font-size:10px;background:#fff1de;color:#a06a19;padding:2px 7px;border-radius:999px;font-weight:700">DESC '+(o.descontoTipo==='percent'?Number(o.desconto)+'%':BRL(o.desconto))+'</span>':'';
+    const saldoTag=o.pago==='parcial'?' <span class="small">(pago '+BRL(orderPaidTotal(o))+' - falta '+BRL(orderSaldo(o))+')</span>':'';
     const quickBtns=
       '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap" onclick="event.stopPropagation()">'+
       (o.status!=='entregue'&&o.status!=='cancelado'?'<button class="btn btn-soft" style="flex:1;min-width:90px" onclick="quickMarkDelivered(\''+o.id+'\')">✓ Entregue</button>':'')+
@@ -742,7 +817,7 @@ function renderOrders(){
       '<button class="btn btn-soft" style="flex:0 0 auto;padding:7px 11px" onclick="openOrderSummary(\''+o.id+'\')" title="Gerar resumo para o cliente">📤</button>'+
       (o.whatsapp?'<button class="btn btn-soft" style="flex:0 0 auto;padding:7px 11px" onclick="waClient(\''+o.id+'\')" title="Abrir WhatsApp">💬</button>':'')+
       '</div>';
-    return '<div class="list-item" onclick="openOrderForm(\''+o.id+'\')"><div class="head"><div><strong>'+escH(o.cliente)+'</strong><div class="small">'+fmtDate(o.entrega)+' - '+escH(o.origem)+'</div></div><span class="status '+(STATUS[o.status]?.cls||'st-novo')+'">'+escH(STATUS[o.status]?.label||o.status)+'</span></div><div class="small" style="margin-bottom:6px">'+escH(itensSummary(o))+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span><strong>'+BRL(tot)+'</strong>'+descTag+' - <span class="pago-'+o.pago+'">'+escH(o.pago).toUpperCase()+'</span></span><span class="small '+(luc>=0?'profit-pos':'profit-neg')+'">Lucro '+BRL(luc)+'</span></div>'+quickBtns+'</div>';
+    return '<div class="list-item" onclick="openOrderForm(\''+o.id+'\')"><div class="head"><div><strong>'+escH(o.cliente)+'</strong><div class="small">'+fmtDate(o.entrega)+' - '+escH(o.origem)+'</div></div><span class="status '+(STATUS[o.status]?.cls||'st-novo')+'">'+escH(STATUS[o.status]?.label||o.status)+'</span></div><div class="small" style="margin-bottom:6px">'+escH(itensSummary(o))+'</div><div style="display:flex;justify-content:space-between;align-items:center"><span><strong>'+BRL(tot)+'</strong>'+descTag+' - <span class="pago-'+o.pago+'">'+escH(o.pago).toUpperCase()+'</span>'+saldoTag+'</span><span class="small '+(luc>=0?'profit-pos':'profit-neg')+'">Lucro '+BRL(luc)+'</span></div>'+quickBtns+'</div>';
   }).join(''):'<div class="empty">Nenhum pedido encontrado</div>');
 }
 document.querySelectorAll('#orderTabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#orderTabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderOrders();}));
@@ -760,11 +835,12 @@ window.quickMarkDelivered=quickMarkDelivered;
 
 async function quickMarkPaid(id){
   const o=orders.find(x=>x.id===id); if(!o) return;
-  const ok=await showDialog({title:'Marcar como pago',message:'Confirmar pagamento do pedido de '+o.cliente+'?',okText:'Marcar pago',cancelText:'Cancelar'});
+  const saldo=orderSaldo(o);
+  const ok=await showDialog({title:'Marcar como pago',message:'Confirmar recebimento de '+BRL(saldo)+' do pedido de '+o.cliente+'?',okText:'Marcar pago',cancelText:'Cancelar'});
   if(!ok) return;
-  o.pago='pago';
-  o.pagoEm=new Date().toISOString(); // carimba a data de pagamento (entra no caixa do mes)
-  if(await saveOrder(o)){await loadAll(); renderOrders(); toast('Pedido marcado como pago','success');}
+  // Registra o pagamento do saldo restante como um pagamento (mantem o historico consistente)
+  const done=await addPayment(id,saldo,new Date().toISOString().slice(0,10),'Pagamento total (marcado na lista)');
+  if(done){ renderOrders(); toast('Pedido marcado como pago','success'); }
 }
 window.quickMarkPaid=quickMarkPaid;
 
@@ -1177,9 +1253,57 @@ function openOrderForm(id){
     $('orderForm').reset(); $('orderId').value=''; formItens=[];
   }
   renderItensForm();
+  renderPaymentsCard(id||'');
   goTo('pgOrderForm');
 }
 window.openOrderForm=openOrderForm;
+
+/* Card de pagamentos dentro do form de pedido */
+function renderPaymentsCard(orderId){
+  const card=$('paymentsCard');
+  if(!orderId){ card.style.display='none'; return; }
+  const o=orders.find(x=>x.id===orderId);
+  if(!o){ card.style.display='none'; return; }
+  card.style.display='block';
+  const tot=orderTotal(o), paid=orderPaidTotal(o), saldo=orderSaldo(o);
+  $('paymentsSummary').innerHTML=
+    '<div class="totals-row"><span>Total do pedido</span><span>'+BRL(tot)+'</span></div>'+
+    '<div class="totals-row"><span>Total pago</span><span class="profit-pos">'+BRL(paid)+'</span></div>'+
+    '<div class="totals-row" style="background:'+(saldo>0?'#fce9eb':'#e7f4eb')+'"><span><strong>Saldo devedor</strong></span><span class="'+(saldo>0?'profit-neg':'profit-pos')+'">'+BRL(saldo)+'</span></div>';
+  const list=paymentsFor(orderId).slice().sort((a,b)=>new Date(b.data)-new Date(a.data));
+  $('paymentsList').innerHTML=list.length?list.map(p=>
+    '<div class="list-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px">'+
+      '<div><strong>'+BRL(p.valor)+'</strong><div class="small">'+fmtDate(p.data.slice(0,10))+(p.obs?' - '+escH(p.obs):'')+'</div></div>'+
+      '<button type="button" class="item-del" onclick="removePaymentClick(\''+p.id+'\')">&#215;</button>'+
+    '</div>'
+  ).join(''):'<div class="empty">Nenhum pagamento registrado ainda</div>';
+  const pd=$('payData'); if(pd&&!pd.value) pd.value=new Date().toISOString().slice(0,10);
+}
+window.registrarPagamento=async function(){
+  const id=$('orderId').value;
+  if(!id){toast('Salve o pedido antes de registrar pagamentos','error');return;}
+  const valor=$('payValor').value, data=$('payData').value;
+  const ok=await addPayment(id,valor,data);
+  if(ok){
+    $('payValor').value='';
+    const o=orders.find(x=>x.id===id);
+    if(o) $('oPago').value=o.pago;
+    renderPaymentsCard(id);
+    toast('Pagamento registrado','success');
+  }
+};
+window.removePaymentClick=async function(paymentId){
+  const id=$('orderId').value;
+  const confirmed=await showDialog({title:'Excluir pagamento',message:'Remover este pagamento? A situacao do pedido sera recalculada.',okText:'Excluir',cancelText:'Cancelar',danger:true});
+  if(!confirmed) return;
+  const ok=await deletePayment(paymentId,id);
+  if(ok){
+    const o=orders.find(x=>x.id===id);
+    if(o) $('oPago').value=o.pago;
+    renderPaymentsCard(id);
+    toast('Pagamento removido','success');
+  }
+};
 
 async function submitOrder(e){
   e.preventDefault();
@@ -1287,26 +1411,49 @@ let _finBasis=localStorage.getItem('atelie_finBasis')||'pago';
 function renderFinanceiro(){
   $('monthLabel').textContent=MONTHS[selMonth]+' '+selYear;
   document.querySelectorAll('#finBasis button').forEach(b=>b.classList.toggle('active',b.dataset.basis===_finBasis));
-  const inPeriod=o=>{
-    let raw;
-    if(_finBasis==='pago'){
-      // Por pagamento: usa pagoEm (com fallback para criado em historicos sem data carimbada)
-      raw=o.pagoEm||o.criado;
-    } else if(_finBasis==='entrega'){
-      raw=o.entrega||o.criado;
-    } else {
-      raw=o.criado;
-    }
-    if(!raw) return false;
-    const d=_finBasis==='entrega'&&o.entrega?new Date(o.entrega+'T12:00:00'):new Date(raw);
-    return d.getMonth()===selMonth&&d.getFullYear()===selYear;
-  };
-  // Por pagamento: ja restringe ao pedidos pagos (caixa real). Outras bases mantem o comportamento antigo.
-  const baseList=_finBasis==='pago'?orders.filter(o=>o.pago==='pago'&&o.status!=='cancelado'):orders.filter(o=>o.status!=='cancelado');
-  const mo=baseList.filter(inPeriod);
-  const pagos=_finBasis==='pago'?mo:mo.filter(o=>o.pago==='pago');
-  const rec=pagos.reduce((s,o)=>s+orderTotal(o),0), cus=pagos.reduce((s,o)=>s+Number(o.custo||0),0), des=pagos.reduce((s,o)=>s+Number(o.despesas||0),0);
-  const luc=rec-cus-des, tk=pagos.length?rec/pagos.length:0, mg=rec?Math.round((luc/rec)*100):0, pend=mo.filter(o=>o.pago!=='pago').length;
+  let mo,pagos,rec,cus,des;
+  if(_finBasis==='pago'){
+    // Por pagamento (regime de caixa real): agrupa os PAGAMENTOS recebidos no periodo por pedido.
+    // Pedidos parciais entram com o valor efetivamente recebido no mes, nao o total do pedido.
+    // Custo/despesa entram proporcionais ao quanto daquele pedido foi recebido neste periodo.
+    const ordersById={}; orders.forEach(o=>{ordersById[o.id]=o;});
+    const paysInPeriod=payments.filter(p=>{
+      const o=ordersById[p.orderId]; if(!o||o.status==='cancelado') return false;
+      const d=new Date(p.data);
+      return d.getMonth()===selMonth&&d.getFullYear()===selYear;
+    });
+    const byOrder={};
+    paysInPeriod.forEach(p=>{
+      if(!byOrder[p.orderId]) byOrder[p.orderId]={orderId:p.orderId,recebido:0};
+      byOrder[p.orderId].recebido+=Number(p.valor||0);
+    });
+    mo=Object.values(byOrder).map(g=>{
+      const o=ordersById[g.orderId];
+      const tot=orderTotal(o)||1;
+      const prop=g.recebido/tot;
+      return {...o,_recebidoPeriodo:g.recebido,_custoPeriodo:prop*Number(o.custo||0),_despesaPeriodo:prop*Number(o.despesas||0)};
+    });
+    pagos=mo;
+    rec=mo.reduce((s,o)=>s+o._recebidoPeriodo,0);
+    cus=mo.reduce((s,o)=>s+o._custoPeriodo,0);
+    des=mo.reduce((s,o)=>s+o._despesaPeriodo,0);
+  } else {
+    const inPeriod=o=>{
+      const raw=_finBasis==='entrega'?(o.entrega||o.criado):o.criado;
+      if(!raw) return false;
+      const d=_finBasis==='entrega'&&o.entrega?new Date(o.entrega+'T12:00:00'):new Date(raw);
+      return d.getMonth()===selMonth&&d.getFullYear()===selYear;
+    };
+    const baseList=orders.filter(o=>o.status!=='cancelado');
+    mo=baseList.filter(inPeriod);
+    pagos=mo.filter(o=>o.pago==='pago');
+    rec=pagos.reduce((s,o)=>s+orderTotal(o),0);
+    cus=pagos.reduce((s,o)=>s+Number(o.custo||0),0);
+    des=pagos.reduce((s,o)=>s+Number(o.despesas||0),0);
+  }
+  const luc=rec-cus-des, tk=pagos.length?rec/pagos.length:0, mg=rec?Math.round((luc/rec)*100):0;
+  // Pendente = pedidos com saldo em aberto no sistema todo (nao depende do periodo selecionado)
+  const pend=orders.filter(o=>o.pago!=='pago'&&o.status!=='cancelado').length;
   $('finKpis').innerHTML=
     '<div class="kpi kpi-hl"><div class="label">Receita</div><div class="value">'+BRL(rec)+'</div><div class="sub">'+pagos.length+' pago(s)</div></div>'+
     '<div class="kpi"><div class="label">Custos totais</div><div class="value">'+BRL(cus+des)+'</div><div class="sub">Material + despesas</div></div>'+
@@ -1318,8 +1465,11 @@ function renderFinanceiro(){
     '<div class="totals-row"><span>Outras despesas</span><span>'+BRL(des)+'</span></div>'+
     '<div class="totals-row" style="background:'+(luc>=0?'#e7f4eb':'#fce9eb')+'"><span><strong>Lucro liquido</strong></span><span class="'+(luc>=0?'profit-pos':'profit-neg')+'">'+BRL(luc)+'</span></div>';
   const bySrc={};
-  // Receita por origem coerente com o KPI Receita (so pedidos pagos)
-  pagos.forEach(o=>{bySrc[o.origem]=(bySrc[o.origem]||0)+orderTotal(o);});
+  // Receita por origem coerente com o KPI Receita (usa valor recebido no periodo quando disponivel)
+  pagos.forEach(o=>{
+    const v=typeof o._recebidoPeriodo==='number'?o._recebidoPeriodo:orderTotal(o);
+    bySrc[o.origem]=(bySrc[o.origem]||0)+v;
+  });
   const maxS=Math.max(1,...Object.values(bySrc));
   $('finSources').innerHTML=Object.keys(bySrc).length?Object.entries(bySrc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="bar-row"><span class="bar-label">'+escH(k)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(v/maxS*100)+'%"></div></div><span class="bar-val">'+BRL(v)+'</span></div>').join(''):'<div class="empty">Sem dados de origem</div>';
   _finMoCache=mo;
@@ -1329,10 +1479,15 @@ function renderFinOrders(){
   const s=norm($('finSearch')?.value);
   const list=s?_finMoCache.filter(o=>norm(o.cliente).includes(s)):_finMoCache;
   $('finOrders').innerHTML=list.length?list.map(o=>{
-    const sub=orderSubtotal(o), t=orderTotal(o), l=t-Number(o.custo||0)-Number(o.despesas||0);
+    const sub=orderSubtotal(o), totOrder=orderTotal(o);
+    const isPeriodo=typeof o._recebidoPeriodo==='number';
+    const t=isPeriodo?o._recebidoPeriodo:totOrder;
+    const custosPeriodo=isPeriodo?(o._custoPeriodo+o._despesaPeriodo):(Number(o.custo||0)+Number(o.despesas||0));
+    const l=t-custosPeriodo;
     const itH=(o.itens||[]).map(i=>'<div class="small">&#183; '+(Number(i.qtd)||0)+'x '+escH(i.desc)+' = '+BRL(i.precoUnit*i.qtd)+'</div>').join('');
     const descLine=o.desconto&&Number(o.desconto)>0?'<div class="small" style="color:var(--gold)">Desconto: '+(o.descontoTipo==='percent'?Number(o.desconto)+'%':BRL(o.desconto))+' (subtotal '+BRL(sub)+')</div>':'';
-    return '<div class="list-item"><div class="head"><strong>'+escH(o.cliente)+'</strong><span class="pago-'+o.pago+'">'+escH(o.pago).toUpperCase()+'</span></div>'+itH+descLine+'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:8px;font-size:12px"><div><span class="small">Receita</span><div style="font-weight:700">'+BRL(t)+'</div></div><div><span class="small">Custos</span><div style="font-weight:700;color:var(--red)">'+BRL(Number(o.custo||0)+Number(o.despesas||0))+'</div></div><div><span class="small">Lucro</span><div class="'+(l>=0?'profit-pos':'profit-neg')+'" style="font-weight:700">'+BRL(l)+'</div></div></div></div>';
+    const parcialTag=isPeriodo&&t<totOrder-0.01?'<div class="small" style="color:var(--gold)">Recebido neste periodo, de '+BRL(totOrder)+' do pedido total (saldo '+BRL(orderSaldo(o))+')</div>':'';
+    return '<div class="list-item"><div class="head"><strong>'+escH(o.cliente)+'</strong><span class="pago-'+o.pago+'">'+escH(o.pago).toUpperCase()+'</span></div>'+itH+descLine+parcialTag+'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:8px;font-size:12px"><div><span class="small">Receita</span><div style="font-weight:700">'+BRL(t)+'</div></div><div><span class="small">Custos</span><div style="font-weight:700;color:var(--red)">'+BRL(custosPeriodo)+'</div></div><div><span class="small">Lucro</span><div class="'+(l>=0?'profit-pos':'profit-neg')+'" style="font-weight:700">'+BRL(l)+'</div></div></div></div>';
   }).join(''):'<div class="empty">'+(s?'Nenhum resultado para "'+escH(s)+'"':'Nenhum pedido neste mes')+'</div>';
 }
 
