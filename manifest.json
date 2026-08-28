@@ -1,6 +1,6 @@
 {
   "name": "Ateliê do Laço - Sistema",
-  "short_name": "Ateliê",
+  "short_name": "Ateliê Admin",
   "description": "Controle de pedidos e financeiro do Ateliê do Laço",
   "start_url": "./index.html",
   "scope": "./",
