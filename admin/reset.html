@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Atualizando sistema...</title>
+<style>
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:linear-gradient(160deg,#fff5f8 0%,#fff 60%);color:#3d2a2e;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .card{background:#fff;border:1px solid #efdedd;border-radius:18px;box-shadow:0 8px 24px rgba(201,143,152,.12);padding:32px 24px;max-width:380px;width:100%;text-align:center}
+  .logo{font-size:48px;line-height:1;margin-bottom:8px}
+  h1{font-family:'Brush Script MT','Lucida Handwriting','Segoe Script',cursive;font-size:32px;color:#a04054;font-style:italic;margin:0 0 4px}
+  .sub{color:#9c8589;font-size:12px;margin-bottom:24px;letter-spacing:.05em}
+  #status{font-size:15px;font-weight:600;color:#a04054;margin:14px 0;min-height:24px}
+  .steps{text-align:left;font-size:13px;color:#6f575b;line-height:1.7;background:#fff5f8;border-radius:10px;padding:14px;margin-top:18px}
+  .steps li{margin-bottom:4px}
+  .ok{color:#6e9d7a}
+  .err{color:#c77982}
+  .spinner{width:32px;height:32px;border:3px solid #efdedd;border-top-color:#c98f98;border-radius:50%;animation:s 0.8s linear infinite;margin:0 auto}
+  @keyframes s{to{transform:rotate(360deg)}}
+  a.btn{display:inline-block;background:linear-gradient(135deg,#d8a8ae,#c98f98);color:#fff;text-decoration:none;padding:11px 22px;border-radius:12px;font-weight:600;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🎀</div>
+  <h1>Ateliê do Laço</h1>
+  <div class="sub">ATUALIZAÇÃO DO SISTEMA</div>
+  <div class="spinner" id="spin"></div>
+  <div id="status">Limpando dados antigos...</div>
+  <ul class="steps" id="steps">
+    <li id="s1">⏳ Removendo service worker antigo...</li>
+    <li id="s2">⏳ Apagando cache local...</li>
+    <li id="s3">⏳ Redirecionando para o admin...</li>
+  </ul>
+</div>
+<script>
+(async function(){
+  const $=id=>document.getElementById(id);
+  const status=$('status');
+  try{
+    // 1. Unregister all service workers
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      for(const r of regs){ try{ await r.unregister(); }catch(e){} }
+    }
+    $('s1').innerHTML='<span class="ok">✅</span> Service worker antigo removido';
+
+    // 2. Clear all caches
+    if('caches' in window){
+      const keys=await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k).catch(()=>{})));
+    }
+    $('s2').innerHTML='<span class="ok">✅</span> Cache local apagado';
+
+    // 3. Clear localStorage da chave de basis (forca default novo)
+    try{ localStorage.removeItem('atelie_finBasis'); }catch(e){}
+
+    status.textContent='Pronto! Carregando versão nova...';
+    await new Promise(r=>setTimeout(r,1200));
+    $('s3').innerHTML='<span class="ok">✅</span> Redirecionando agora';
+    $('spin').style.display='none';
+
+    // 4. Redirect com cache-buster forte: novo URL que browser nao conhece + reload tipo 'reload' (sem cache HTTP)
+    setTimeout(()=>{
+      const url='./?bust='+Date.now()+'&v=13';
+      // Substitui historico (nao volta pra reset.html) e forca reload sem cache
+      window.location.replace(url);
+    },800);
+  }catch(err){
+    $('spin').style.display='none';
+    status.innerHTML='<span class="err">Erro: '+(err.message||err)+'</span>';
+    $('steps').innerHTML='<li>Tente abrir manualmente:</li>';
+    document.querySelector('.card').insertAdjacentHTML('beforeend','<a class="btn" href="./?bust='+Date.now()+'">Abrir admin</a>');
+  }
+})();
+</script>
+</body>
+</html>
